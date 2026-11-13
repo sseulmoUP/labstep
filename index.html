@@ -863,7 +863,7 @@ function expV(){
         <button class="more-link" data-a="openStep" data-id="${s.id}">${s.photos.length?`사진 ${s.photos.length}장 · 메모 보기`:'자세히 · 메모'} ›</button></div>
       <div class="side"><span class="shot">${I.cam}</span><span class="cnt">${s.photos.length}</span></div></div>`;
   });
-  return head+`<div class="hint">단계를 누르면 카메라로 찍을지 앨범에서 고를지 고를 수 있어요. 사진은 그 단계에 자동으로 붙어요.</div>`+out+`<div style="height:30px"></div>`;
+  return head+`<div class="hint">단계를 누르면 카메라로 찍을지 앨범에서 고를지 고를 수 있어요. 사진은 그 단계에 자동으로 붙어요.</div>`+out+`<div class="pad" style="text-align:center;padding-bottom:30px"><button class="mini" data-a="delExp">이 실험 지우기</button></div>`;
 }
 
 function resultHTML(e){
@@ -2306,7 +2306,7 @@ async function syncTeam(t){
   const rows=await rpc('ls_pull_exps',{p_code:code,p_since:SYNC.since[code]||null})||[];
   for(const row of rows){
     const k=code+'|'+row.exp_id,d=row.data;SYNC.seen[k]=row.updated_at;
-    if(validExp(d)){
+    if(validExp(d)&&!(sy.gone&&sy.gone[row.exp_id])){ // 이 기기에서 지운 실험은 다시 받지 않음
       const have=new Map();S.teams.forEach(tt=>tt.experiments.forEach(x=>{if(x.id===d.id)x.steps.forEach(q=>q.photos.forEach(p=>have.set(p.id,p.src)))}));
       const need=[];d.steps.forEach(q=>q.photos.forEach(p=>{if(p&&have.has(p.id))p.src=have.get(p.id);else if(p&&typeof p.id==='string')need.push(p.id)}));
       const srcs=new Map();
@@ -2341,6 +2341,11 @@ async function syncTick(){
 setInterval(syncTick,4000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncTick()});
 Object.assign(A,{
+  // 실험 하나 지우기: 두 번 눌러야 지워짐. 공유 중이어도 이 기기에서만 지워지고, 다시 받아 오지 않게 표시해 둠
+  delExp(el){const t=team(),e=exp();if(!t||!e)return;
+    if(!el.classList.contains('arm')){el.classList.add('arm');el.style.color='#C2504A';el.textContent='한 번 더 누르면 사진과 기록이 모두 지워져요';setTimeout(()=>{if(el.isConnected){el.classList.remove('arm');el.style.color='';el.textContent='이 실험 지우기'}},3500);return}
+    t.experiments=t.experiments.filter(x=>x.id!==e.id);if(t.sync){t.sync.gone=t.sync.gone||{};t.sync.gone[e.id]=1}
+    save();hist.length=0;hist.push({name:'teams'});V={name:'team',tid:t.id};render();window.scrollTo(0,0);toast(`<b>${esc(e.title)}</b> 실험을 지웠어요`)},
   syncNew(){const t=team();t.sync={code:fmtCode(code()+code().slice(0,4)),sent:{}};save();render();syncTick();toast('공유를 시작했어요 · 코드를 팀원에게 알려 주세요')},
   syncJoin(){const raw=$('#sync-code').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(raw.length!==12){$('#sync-code').focus();return toast('코드 12자리를 입력하세요')}
     const t=team();t.sync={code:fmtCode(raw),sent:{}};save();document.activeElement&&document.activeElement.blur();render();syncTick();toast('참여했어요 · 곧 팀의 기록을 받아 와요')},
