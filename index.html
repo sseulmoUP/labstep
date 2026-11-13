@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>랩스텝 LabStep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  /* 부드러운 흰 바탕, 남색 글자, 연보라빛 파랑 강조, 형광펜 노랑 하나 */
+  --ink:#252B3B; --paper:#FFFFFF; --bg:#F5F6FA; --line:#E7E9F1; --line2:#CFD4E2; --edge:#DDE1EC;
+  --muted:#687083; --orange:#5266E0; --orange-soft:#EEF0FD; --accent-ink:#3F51C4; --hl:#FFE169; --danger:#C2504A;
+  --sans:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --round:'Jua','Gowun Dodum','Apple SD Gothic Neo',sans-serif;
+  --serif:var(--round);
+  --mono:var(--sans);
+  --r:16px; --r-sm:12px;
+  --shadow:0 4px 14px rgba(37,43,59,.05),0 1px 2px rgba(37,43,59,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+#phone{max-width:440px;overflow-x:hidden;min-height:100vh;margin:0 auto;background:var(--paper);position:relative;display:flex;flex-direction:column}
+@media(min-width:560px){
+  body{padding:28px 0}
+  #phone{min-height:calc(100vh - 56px);border:1px solid var(--edge);box-shadow:0 18px 50px rgba(37,43,59,.10)}
+}
+.mono{font-family:var(--mono)}
+.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:6px;height:54px;padding:0 8px}
+.top h1{font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-sm)}
+.iconbtn:active{background:var(--bg)}
+.iconbtn svg{width:22px;height:22px}
+.content{flex:1;padding:0 0 110px}
+.pad{padding:18px}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;width:100%;border:1px solid var(--edge);font-weight:700;font-size:16px;border-radius:var(--r-sm)}
+.btn.black{background:var(--ink);color:#fff}
+.btn.orange{background:var(--orange);color:var(--ink);border-color:var(--ink)}
+.btn.ghost{background:#fff}
+.btn:active{transform:translate(1px,1px)}
+.btn svg{width:20px;height:20px}
+.btn.sm{height:38px;font-size:14px;width:auto;padding:0 14px}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 6px;border:1px solid var(--edge);border-radius:var(--r-sm);letter-spacing:.04em;vertical-align:middle}
+.tag.o{background:var(--orange);}
+.tag.g{border-color:var(--line2);color:var(--muted)}
+.bottom{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--edge);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:5;margin-top:auto}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 16px;font-size:15px;border-radius:var(--r-sm);opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.toast b{color:var(--orange)}
+
+/* login */
+.login{flex:1;display:flex;flex-direction:column;padding:28px 22px 26px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:34px;height:34px;background:var(--orange);border:1px solid var(--edge);display:grid;place-items:center}
+.logo-mark svg{width:20px;height:20px}
+.logo b{font-size:20px;letter-spacing:-.02em}
+.hero{margin-top:auto;margin-bottom:28px}
+.hero h2{font-size:34px;line-height:1.18;letter-spacing:-.03em;font-weight:700}
+.hero h2 em{font-style:normal;background:var(--orange);padding:0 4px}
+.hero p{margin-top:14px;color:var(--muted);font-size:16px;line-height:1.6}
+.invite{border:1px dashed var(--line2);padding:12px 14px;margin-bottom:14px;font-size:15px;line-height:1.5}
+.invite .label{margin-bottom:4px}
+.gbtn{background:#fff}
+.gdot{width:20px;height:20px;border-radius:50%;border:1px solid var(--edge);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.note{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
+
+/* lists */
+.sect-h{display:flex;align-items:baseline;justify-content:space-between;padding:20px 18px 8px}
+.card{display:block;width:100%;text-align:left;border-bottom:1px solid var(--line);padding:16px 18px}
+.card:active{background:var(--bg)}
+.card .t{font-weight:700;font-size:16px}
+.card .s{color:var(--muted);font-size:14px;margin-top:4px}
+.bar{height:6px;border:1px solid var(--edge);margin-top:10px;position:relative;background:#fff}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--orange)}
+.members{display:flex;align-items:center;gap:0;padding:14px 18px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.av{width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);display:grid;place-items:center;font-size:12px;letter-spacing:-.04em;font-weight:700;background:#fff;margin-right:-6px}
+.av.me{background:var(--orange)}
+.members span.txt{margin-left:16px;font-size:14px;color:var(--muted);flex:1}
+.empty{padding:40px 24px;text-align:center;color:var(--muted);font-size:15px;line-height:1.6}
+.empty .big{width:56px;height:56px;margin:0 auto 14px;border:1.5px dashed var(--line2);display:grid;place-items:center}
+
+/* experiment */
+.exp-head{padding:16px 18px 14px;border-bottom:1px solid var(--edge)}
+.exp-head .t{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+.exp-head .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:14px}
+.tabs{display:flex;border-bottom:1px solid var(--edge)}
+.tabs button{flex:1;height:44px;font-weight:700;font-size:15px;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--orange)}
+.secname{padding:16px 18px 6px;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.06em;background:var(--bg);border-bottom:1px solid var(--line)}
+.step{display:flex;gap:12px;padding:14px 14px 14px 18px;border-bottom:1px solid var(--line);align-items:flex-start;cursor:pointer}
+.step:active{background:var(--orange-soft)}
+.step .no{font-family:var(--mono);font-weight:600;font-size:14px;width:26px;flex:none;padding-top:2px}
+.step.done .no{color:var(--orange)}
+.step .body{flex:1;min-width:0}
+.step .t{font-weight:700;font-size:16px}
+.step .d{color:var(--muted);font-size:14px;line-height:1.5;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.thumbs{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+.thumbs img{width:44px;height:44px;object-fit:cover;border:1px solid var(--edge)}
+.thumbs .more{width:44px;height:44px;border:1px solid var(--edge);display:grid;place-items:center;font-family:var(--mono);font-size:13px}
+.step .side{display:flex;flex-direction:column;align-items:center;gap:8px;flex:none}
+.shot{width:46px;height:46px;border:1px solid var(--edge);background:var(--orange);display:grid;place-items:center;border-radius:50%}
+.shot svg{width:22px;height:22px}
+.cnt{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.more-link{font-size:13px;color:var(--ink);text-decoration:underline;text-underline-offset:3px;padding:2px}
+.hint{margin:14px 18px;padding:10px 12px;background:var(--orange-soft);border-left:3px solid var(--orange);font-size:14px;line-height:1.5}
+
+/* step detail */
+.instr{padding:16px 18px;border-bottom:1px solid var(--line);font-size:15px;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 18px}
+.ph{border:1px solid var(--edge);background:#fff;display:flex;flex-direction:column;min-width:0}
+.ph.new{outline:3px solid var(--orange);outline-offset:2px}
+.ph img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;display:block;border-bottom:1px solid var(--edge);cursor:zoom-in}
+.ph .meta{display:flex;align-items:center;justify-content:space-between;padding:7px 8px 0;font-size:12px}
+.ph .meta b{font-size:13px}
+.ph .meta .mono{color:var(--muted);font-size:11px}
+.ph input{min-width:0;border:0;border-bottom:1px solid var(--line);margin:4px 8px 8px;padding:6px 0;font-size:14px;outline:none;background:transparent}
+.ph input:focus{border-bottom-color:var(--orange)}
+.ph .del{font-size:12px;color:var(--muted);padding:0 8px 8px;text-align:left}
+.ph .del.arm{color:var(--danger);font-weight:700}
+.addph{border:1.5px dashed var(--line2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;aspect-ratio:1/1;font-size:14px;color:var(--muted)}
+.addph svg{width:26px;height:26px}
+.obs{padding:4px 18px 20px}
+.obs textarea{width:100%;min-height:96px;border:1px solid var(--edge);padding:12px;font-size:15px;line-height:1.6;resize:vertical;outline:none;border-radius:var(--r-sm);margin-top:8px}
+.obs textarea:focus{box-shadow:0 0 0 3px var(--orange-soft)}
+.obs .by{font-size:13px;color:var(--muted);margin-top:6px}
+
+/* result */
+.rs-step{padding:16px 18px;border-bottom:1px solid var(--line)}
+.rs-step .h{display:flex;gap:10px;align-items:baseline}
+.rs-step .h .mono{font-weight:600;color:var(--orange);font-size:14px}
+.rs-step .h b{font-size:16px}
+.rs-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.rs-photos figure{border:1px solid var(--line2)}
+.rs-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.rs-photos figcaption{font-size:12px;padding:5px 6px;line-height:1.45}
+.rs-photos figcaption span{color:var(--muted)}
+.rs-obs{margin-top:10px;padding:8px 10px;border-left:3px solid var(--orange);background:var(--orange-soft);font-size:14px;line-height:1.55}
+.rs-none{margin-top:8px;font-size:13px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--edge)}
+.stats div{padding:14px 10px;text-align:center;border-right:1px solid var(--line)}
+.stats div:last-child{border-right:0}
+.stats b{display:block;font-family:var(--mono);font-size:22px}
+.stats span{font-size:12px;color:var(--muted)}
+
+/* editor */
+.ed{border-bottom:1px solid var(--line);padding:12px 14px 12px 18px;display:flex;gap:10px}
+.ed .no{font-family:var(--mono);font-weight:600;font-size:14px;width:24px;padding-top:9px;flex:none}
+.ed .f{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ed input,.ed textarea{width:100%;border:1px solid var(--line2);padding:8px 10px;font-size:15px;border-radius:var(--r-sm);outline:none;background:#fff}
+.ed input{font-weight:700}
+.ed textarea{font-size:14px;color:#333;min-height:56px;resize:vertical;line-height:1.5}
+.ed input:focus,.ed textarea:focus{border-color:var(--ink)}
+.ed .ctl{display:flex;flex-direction:column;gap:2px;flex:none}
+.ed .ctl button{width:32px;height:30px;border:1px solid var(--line2);font-size:14px;display:grid;place-items:center;border-radius:var(--r-sm)}
+.ed .ctl button:disabled{opacity:.3}
+.ed .ctl button.x{color:var(--danger)}
+.ed-sec{display:flex;align-items:center;gap:8px;padding:12px 18px 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+.ed-sec input{flex:1;border:0;background:transparent;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.06em;outline:none;padding:4px 0;border-bottom:1px dashed var(--line2)}
+
+/* upload */
+.drop{margin:18px;border:1.5px dashed var(--line2);padding:30px 18px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;cursor:pointer}
+.drop svg{width:34px;height:34px}
+.drop b{font-size:16px}
+.drop span{font-size:14px;color:var(--muted)}
+.or{display:flex;align-items:center;gap:10px;margin:0 18px;color:var(--muted);font-size:13px}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.ext{padding:60px 24px;text-align:center}
+.ext .file{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--edge);padding:8px 12px;font-size:14px;max-width:100%}
+.ext .file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scan{height:4px;background:var(--line);margin:22px auto 12px;max-width:240px;position:relative;overflow:hidden}
+.scan i{position:absolute;top:0;bottom:0;width:40%;background:var(--orange);animation:scan 1s infinite ease-in-out}
+@keyframes scan{0%{left:-40%}100%{left:100%}}
+.ext p{font-size:15px;color:var(--muted)}
+
+/* members */
+.mem{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.mem .av{margin:0;width:36px;height:36px}
+.mem .n{flex:1}
+.mem .n b{font-size:16px}
+.mem .n div{font-size:13px;color:var(--muted)}
+.linkbox{margin:16px 18px;border:1px solid var(--edge)}
+.linkbox .u{padding:14px;font-family:var(--mono);font-size:15px;word-break:break-all;border-bottom:1px solid var(--edge);background:var(--bg)}
+.linkbox .r{display:flex}
+.linkbox .r button{flex:1;height:44px;font-weight:700;font-size:14px}
+.linkbox .r button+button{border-left:1px solid var(--edge)}
+.linkbox .r button.o{background:var(--orange)}
+
+/* viewer */
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:60;display:flex;flex-direction:column}
+.viewer img{flex:1;min-height:0;object-fit:contain;width:100%}
+.viewer .vb{display:flex;justify-content:space-between;align-items:center;color:#fff;padding:12px 16px;font-size:14px}
+.viewer .vb button{color:#fff;font-weight:700}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:440px;border-top:1px solid var(--edge);padding:20px 18px calc(18px + env(safe-area-inset-bottom))}
+.sheet h3{font-size:17px;margin-bottom:6px}
+.sheet p{font-size:15px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+.sheet input{width:100%;border:1px solid var(--edge);height:46px;padding:0 12px;font-size:16px;margin-bottom:12px;border-radius:var(--r-sm);outline:none}
+.sheet .row{display:flex;gap:8px}
+.mini{font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:6px}
+
+/* 결과 분석 (갭맵 이식) */
+.gsub{display:flex;border-bottom:1px solid var(--edge);background:var(--bg)}
+.gsub button{flex:1;height:40px;font-size:12.5px;letter-spacing:-.02em;font-weight:700;color:var(--muted);border-right:1px solid var(--line)}
+.gsub button:last-child{border-right:0}
+.gsub button.on{background:var(--ink);color:#fff}
+.gf{padding:14px 18px 0}
+.gf .label{display:block;margin-bottom:6px}
+.gf input,.gf select,.gf textarea,.grole select{width:100%;border:1px solid var(--edge);border-radius:var(--r-sm);background:#fff;font:inherit;font-size:15px;color:var(--ink);padding:0 10px;height:44px;outline:none}
+.gf textarea{height:auto;min-height:120px;padding:10px;line-height:1.5;font-family:var(--mono);font-size:13px;resize:vertical}
+.gf textarea.txt{font-family:var(--sans);font-size:15px;min-height:96px}
+.gf input:focus,.gf select:focus,.gf textarea:focus{box-shadow:0 0 0 3px var(--orange-soft)}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+.g2 .gf{padding-left:0;padding-right:0}
+.gpad{padding:0 18px}
+.grow{display:flex;gap:8px;padding:14px 18px 0;flex-wrap:wrap}
+.grow .btn{flex:1;min-width:120px}
+.grole{display:flex;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line)}
+.grole .n{flex:1;min-width:0}
+.grole .n b{font-size:15px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grole .n span{font-size:13px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grole select{width:112px;flex:none;height:40px;font-size:14px}
+.gscroll{overflow-x:auto;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);margin-top:14px}
+.gt{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.gt th,.gt td{padding:9px 12px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line)}
+.gt tbody tr:last-child>*{border-bottom:0}
+.gt thead th{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted);background:var(--bg);font-weight:600;border-bottom:1px solid var(--edge)}
+.gt td:first-child,.gt thead th:first-child{text-align:left;font-weight:700;position:sticky;left:0;background:#fff;z-index:1}
+.gt thead th:first-child{background:var(--bg)}
+.gt tr.base td{background:var(--bg)}
+.gt td.diff{background:var(--orange-soft);font-weight:700}
+.gt td.cur{font-weight:700}
+.gt td.mu{color:var(--muted)}
+.gt td.wrap{white-space:normal;text-align:left;min-width:150px}
+.gt .x{font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.dn{color:var(--danger);font-weight:700}.upv{font-weight:700}
+.flag{color:var(--danger);font-weight:700}
+.gleg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding:12px 18px 0}
+.gleg i{display:inline-block;width:14px;height:14px;border:1px solid var(--edge);margin-right:5px;vertical-align:-2px}
+.gleg .l-diff{background:var(--orange-soft)}.gleg .l-base{background:var(--bg)}
+.gleg .l-gap{background:repeating-linear-gradient(135deg,var(--orange-soft) 0 4px,#fff 4px 8px)}
+.gleg .l-plan{background:var(--orange)}
+.gmap th,.gmap td{border-right:1px solid var(--line)}
+.gmap tr>*:last-child{border-right:0}
+.gmap thead th,.gmap thead th:first-child{text-align:center;position:static}
+.gmap tbody th{background:var(--bg);font-family:var(--mono);font-size:14px;position:sticky;left:0}
+.gmap td,.gmap td:first-child{min-width:92px;height:70px;text-align:center;font-weight:400;position:static;background:#fff}
+.gmap td b{display:block;font-family:var(--mono);font-size:18px;line-height:1.25}
+.gmap td b.none{font-family:var(--sans);font-size:15px;color:var(--muted)}
+.gmap td span{display:block;font-size:12px;color:var(--muted);white-space:normal}
+.gmap td span.lit{color:var(--ink);font-weight:700}
+.gmap td.gap{background:repeating-linear-gradient(135deg,var(--orange-soft) 0 8px,#fff 8px 16px);font-weight:700}
+.gmap td.plan{background:var(--orange);font-weight:700}
+.gmap td.plan span{color:var(--ink)}
+.gh{padding:20px 18px 0;font-size:16px;font-weight:700}
+.gnext{list-style:none;counter-reset:n}
+.gnext li{counter-increment:n;display:flex;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.45}
+.gnext li:before{content:counter(n,decimal-leading-zero);font-family:var(--mono);font-weight:600;color:var(--orange)}
+.gnext li div{flex:1}
+.gnext li div span{display:block;color:var(--muted);font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 0}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--edge);border-radius:var(--r-sm);padding:3px 4px 3px 8px;font-size:13px}
+.chip button{width:24px;height:24px;font-size:15px;color:var(--muted)}
+.gnote{font-size:13px;color:var(--muted);line-height:1.6;padding:10px 18px 0}
+.gintro{padding:16px 18px 0;font-size:14px;line-height:1.6;color:#333}
+.gintro b{display:block;font-size:17px;color:var(--ink);margin-bottom:2px}
+.gpick{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px 0}
+.gpick button{border:1px solid var(--edge);border-radius:var(--r-sm);padding:7px 10px;font-size:14px;font-weight:600;text-align:left}
+.gpick button.on{background:var(--ink);color:#fff}
+.gcard{display:flex;gap:12px;align-items:flex-start;padding:13px 18px;border-bottom:1px solid var(--line)}
+.gcard .ic{flex:none;width:40px;height:40px;border:1px solid var(--edge);display:grid;place-items:center;font-size:17px;font-weight:700;background:var(--bg)}
+.gcard .ic.up{background:var(--orange)}.gcard .ic.dn{background:var(--ink);color:#fff}
+.gcard .t{font-size:16px;font-weight:700;line-height:1.35}
+.gcard .d{font-size:14px;color:#333;line-height:1.55;margin-top:2px}
+.gcard .d b{font-family:var(--mono)}
+.gcard .s{font-size:13px;color:var(--muted);margin-top:2px}
+.gcard .btn{flex:none;align-self:center}
+.gacc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);background:#fff}
+.gacc div{flex:1}.gacc b{display:block;font-size:16px}.gacc span{display:block;font-size:13px;color:var(--muted);margin-top:1px}
+.gacc i{font-style:normal;font-family:var(--mono);font-size:20px;width:28px;height:28px;border:1px solid var(--edge);display:grid;place-items:center}
+.gacc.on{background:var(--bg);border-bottom-color:var(--ink)}
+.gaccb{border-bottom:1px solid var(--edge);padding-bottom:22px}
+.mrow{display:flex;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mrow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .mono{font-size:14px;font-weight:600}
+.msrc{display:flex;margin:14px 18px 0;border:1px solid var(--edge)}
+.msrc button{flex:1;height:42px;font-size:14px;font-weight:700}
+.msrc button+button{border-left:1px solid var(--edge)}
+.msrc button.on{background:var(--orange)}
+.rs-meas{margin-top:8px;font-size:13px;line-height:1.7}
+.rs-meas .mono{font-weight:600}
+.mg .gt td{padding:5px 6px;white-space:nowrap}
+.mg .gt th{position:relative;padding:8px 22px 8px 10px;line-height:1.3;text-transform:none}
+.mg .gt th .x{position:absolute;right:5px;top:6px;text-decoration:none;font-size:16px;line-height:1}
+.mg .gt th small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.mv{width:78px;height:38px;border:1px solid var(--line2);border-radius:var(--r-sm);text-align:center;font-family:var(--mono);font-size:15px;font-weight:600;padding:0 4px;background:#fff;color:var(--ink);outline:none}
+.mn{width:112px;height:38px;border:1px solid var(--line2);border-radius:var(--r-sm);padding:0 8px;font:inherit;font-size:14px;font-weight:700;background:#fff;color:var(--ink);outline:none}
+.mv:focus,.mn:focus{border-color:var(--ink);box-shadow:0 0 0 3px var(--orange-soft)}
+.mv[readonly]{background:var(--bg);border-style:dashed}
+.mg .x.rowx{font-size:16px;text-decoration:none;margin-left:4px;padding:6px 4px}
+.mcalc{margin-top:12px;border:1px solid var(--line2);padding:2px 12px 14px}
+.mcalc select{width:100%;border:1px solid var(--edge);border-radius:var(--r-sm);background:#fff;font:inherit;font-size:15px;height:44px;padding:0 8px}
+.rpst{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line)}
+.rpst span{font-family:var(--mono);font-size:12px;font-weight:600;border:1px solid var(--edge);padding:3px 8px}
+.rpst span.ok{background:var(--ink);color:#fff}
+.rpst span.no{border-style:dashed;color:var(--muted)}
+.addrow{margin-top:8px}
+.gcard .add{font-size:13px;font-weight:700;border:1px solid var(--edge);border-radius:var(--r-sm);padding:7px 9px;background:#fff}
+.gcard .add[disabled]{border-style:dashed;color:var(--muted)}
+.gwarn{margin:14px 18px 0;padding:10px 12px;border:1px solid var(--danger);font-size:14px;line-height:1.5}
+
+/* ===== 부드럽고 단정한 모양새 ===== */
+body{letter-spacing:-.005em}
+.mono,.label,.gt,.stats b,.cnt{font-variant-numeric:tabular-nums}
+@media(min-width:560px){#phone{border-radius:28px;overflow:clip}}
+.top{border-bottom-color:var(--line)}
+.top h1{font-weight:600}
+.iconbtn{border-radius:50%}
+.label{font-size:13px;letter-spacing:0;text-transform:none;font-weight:500}
+.btn{height:50px;border-radius:var(--r);border-color:var(--edge);font-weight:600}
+.btn.black{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn:active{transform:none;opacity:.86}
+.btn.sm{height:40px;border-radius:10px}
+.tag{font-size:12px;letter-spacing:0;font-weight:500;border-radius:99px;padding:2px 9px;border-color:var(--line2);color:var(--muted)}
+.tag.o{background:var(--orange-soft);border-color:transparent;color:var(--orange);font-weight:600}
+.bottom{border-top-color:var(--line);box-shadow:0 -8px 24px rgba(37,43,59,.05)}
+.toast{border-radius:var(--r);padding:12px 18px;box-shadow:0 10px 30px rgba(37,43,59,.18)}
+.toast b{color:#C9DBEE}
+/* 첫 화면 */
+.logo-mark{border:0;border-radius:10px;color:#fff}
+.hero h2{font-family:var(--serif);font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.hero h2 em{background:none;padding:0;color:inherit}
+.invite{border-radius:var(--r);border-style:solid;border-color:var(--line);background:var(--bg)}
+.gdot{border-color:var(--line2)}
+/* 목록 */
+.card .t{font-weight:600}
+.bar{height:6px;border:0;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{border-radius:99px}
+.av{border:2px solid #fff;background:var(--bg);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.av.me{background:var(--orange);color:#fff}
+.empty .big{border-radius:var(--r);border-style:solid;border-color:var(--line);background:var(--bg)}
+/* 실험 화면 */
+.exp-head{border-bottom-color:var(--line)}
+.exp-head .t{font-family:var(--serif);font-size:22px;letter-spacing:-.01em;line-height:1.35}
+.tabs{border-bottom-color:var(--line)}
+.tabs button{font-weight:500;border-bottom-width:2px}
+.tabs button.on{font-weight:700}
+.secname{font-size:14px;letter-spacing:0;font-weight:600;color:var(--muted);padding:14px 18px 8px;border-bottom:0}
+.step{padding:16px 14px 16px 18px}
+.step .no{color:var(--muted);font-weight:600}
+.step .t{font-weight:600}
+.thumbs img,.thumbs .more{border-radius:var(--r-sm);border-color:var(--line)}
+.shot{border:0;background:var(--orange-soft);color:var(--orange)}
+.step.done .shot{background:var(--orange);color:#fff}
+.more-link{color:var(--muted)}
+.hint{border-left:0;border-radius:var(--r);padding:12px 14px;color:#3A4370}
+/* 단계 상세 */
+.ph{border-radius:var(--r);overflow:hidden;border-color:var(--line)}
+.ph img{border-bottom-color:var(--line)}
+.ph.new{outline:2px solid var(--orange);outline-offset:2px}
+.addph{border-radius:var(--r);border-width:1px;background:var(--bg)}
+.obs textarea{border-radius:var(--r);border-color:var(--edge)}
+.obs textarea:focus{border-color:var(--orange)}
+/* 결과 모아보기 */
+.rs-photos figure{border-radius:var(--r-sm);overflow:hidden;border-color:var(--line)}
+.rs-obs{border-left:0;border-radius:var(--r-sm);padding:10px 12px;color:#3A4370}
+.stats{border-bottom-color:var(--line)}
+.stats b{font-weight:600}
+/* 편집·올리기·팀원 */
+.ed input,.ed textarea,.ed .ctl button{border-radius:var(--r-sm)}
+.ed input:focus,.ed textarea:focus{border-color:var(--orange)}
+.ed-sec input{letter-spacing:0;font-size:14px}
+.drop{border-radius:16px;border-width:1px;background:var(--bg)}
+.ext .file{border-radius:99px;padding:8px 14px}
+.scan,.scan i{border-radius:99px}
+.linkbox{border-radius:var(--r);overflow:hidden}
+.linkbox .u{border-bottom-color:var(--line)}
+.linkbox .r button+button{border-left-color:var(--line)}
+.linkbox .r button.o{color:#fff}
+.sheet{border-top:0;border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(37,43,59,.16)}
+.sheet h3{font-family:var(--serif)}
+.sheet input{border-radius:var(--r)}
+.sheet input:focus{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+/* 결과 분석 */
+.gintro b{font-family:var(--serif);font-size:19px;font-weight:700}
+.gf input,.gf select,.gf textarea,.grole select,.mcalc select{border-radius:10px;border-color:var(--edge)}
+.gf input:focus,.gf select:focus,.gf textarea:focus{border-color:var(--orange)}
+.gh{font-weight:600}
+.gpick button{border-radius:99px;padding:7px 13px;border-color:var(--line2);font-weight:500;color:var(--ink)}
+.gpick button.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+.gcard{padding:15px 18px}
+.gcard .ic{border:0;border-radius:var(--r);background:var(--bg);color:var(--muted)}
+.gcard .ic.up{background:var(--orange);color:#fff}
+.gcard .ic.dn{background:var(--ink);color:#fff}
+.gcard .t{font-weight:600}
+.gcard .d b{font-weight:600}
+.gcard .add{border-radius:99px;padding:6px 13px;border-color:var(--line2);font-weight:600;color:var(--orange);background:#fff}
+.gcard .add[disabled]{border-style:solid;border-color:var(--line);color:var(--muted)}
+.gscroll{border-top-color:var(--line);border-bottom-color:var(--line)}
+.gt thead th{letter-spacing:0;font-size:13px;font-weight:600;border-bottom-color:var(--line2)}
+.gt td:first-child{font-weight:600}
+.gt td.diff{color:#3A4370}
+.gmap td b{font-weight:600}
+.gmap td.gap{background:repeating-linear-gradient(135deg,var(--orange-soft) 0 8px,#fff 8px 16px);color:var(--muted)}
+.gmap td.plan{background:var(--orange);color:#fff}
+.gmap td.plan span{color:#fff}
+.gleg i{border-radius:4px;border-color:var(--line2)}
+.gacc{padding:16px 18px}
+.gacc b{font-weight:600}
+.gacc i{border:0;border-radius:50%;background:var(--bg);color:var(--muted);font-size:18px}
+.gacc.on{border-bottom-color:var(--line)}
+.gaccb{border-bottom:1px solid var(--line);background:linear-gradient(var(--bg),#fff 28px)}
+.gnext li:before{font-weight:600}
+.chip{border-radius:99px;border-color:var(--line2);padding:4px 6px 4px 11px}
+.gwarn{border-radius:var(--r);border-color:var(--danger);background:#FBF1F0}
+.mv,.mn{border-radius:var(--r-sm)}
+.mv:focus,.mn:focus{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+.mcalc{border-radius:var(--r);border-color:var(--line)}
+.msrc{border-radius:var(--r);overflow:hidden;border-color:var(--edge)}
+.msrc button{font-weight:500}
+.msrc button+button{border-left-color:var(--edge)}
+.msrc button.on{background:var(--orange);color:#fff;font-weight:600}
+.rpst span{border-radius:99px;border-color:var(--line2);font-weight:500;padding:3px 10px}
+.rpst span.ok{background:var(--orange-soft);border-color:transparent;color:var(--orange);font-weight:600}
+.rpst span.no{border-style:solid;border-color:var(--line);color:var(--muted)}
+.flag,.dn{color:var(--danger)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== 사진 다듬기 (자르기 · 돌리기) ===== */
+.phact{display:flex;justify-content:space-between;align-items:center}
+.ph .del.ed{color:var(--orange);font-weight:600}
+.viewer .vb button+button{margin-left:14px}
+.crop{position:fixed;inset:0;z-index:70;background:#11181D;color:#fff;display:flex;flex-direction:column;touch-action:none}
+.cbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;font-size:16px}
+.cbar b{font-weight:600}
+.cbar button{color:#fff;font-weight:600;font-size:15px;padding:9px 15px;border-radius:99px;min-height:40px}
+.cbar button.ok{background:#fff;color:#11181D}
+.cbar.bot{justify-content:center;gap:10px;padding-bottom:4px;flex-wrap:wrap}
+.cbar.bot button{border:1px solid rgba(255,255,255,.35)}
+.cstage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 16px}
+.cwrap{position:relative;overflow:hidden;line-height:0;max-width:100%;max-height:100%}
+.cwrap img{display:block;max-width:100%;max-height:calc(100vh - 220px);user-select:none;-webkit-user-drag:none;pointer-events:none}
+.cbox{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(8,12,15,.62);cursor:move;touch-action:none}
+.cbox .h{position:absolute;width:36px;height:36px}
+.cbox .h:after{content:"";position:absolute;width:16px;height:16px;border:3px solid #fff}
+.cbox .nw{left:-2px;top:-2px}.cbox .nw:after{left:0;top:0;border-right:0;border-bottom:0}
+.cbox .ne{right:-2px;top:-2px}.cbox .ne:after{right:0;top:0;border-left:0;border-bottom:0}
+.cbox .sw{left:-2px;bottom:-2px}.cbox .sw:after{left:0;bottom:0;border-right:0;border-top:0}
+.cbox .se{right:-2px;bottom:-2px}.cbox .se:after{right:0;bottom:0;border-left:0;border-top:0}
+.chint{text-align:center;font-size:13px;line-height:1.5;color:rgba(255,255,255,.72);padding:8px 16px calc(14px + env(safe-area-inset-bottom))}
+/* ===== 파일에서 읽기 ===== */
+.aibox{margin:16px 18px 0;padding:16px;border-radius:var(--r);background:var(--orange-soft)}
+.aibox .t{font-family:var(--serif);font-weight:700;font-size:16px}
+.aibox .d{font-size:14px;line-height:1.6;color:#3A4370;margin:4px 0 12px}
+.aibox .gf input{background:#fff}
+.aiprov{display:flex;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#fff;margin:2px 0 12px}
+.aiprov button{flex:1;height:42px;font-size:14px;font-weight:500}
+.aiprov button+button{border-left:1px solid var(--edge)}
+.aiprov button.on{background:var(--orange);color:#fff;font-weight:600}
+.aisteps{list-style:none;counter-reset:s;margin:0 0 4px}
+.aisteps li{counter-increment:s;position:relative;padding:0 0 14px 30px;font-size:14px;line-height:1.55;color:#3A4370}
+.aisteps li:before{content:counter(s);position:absolute;left:0;top:0;width:21px;height:21px;border-radius:50%;background:var(--orange);color:#fff;font-size:13px;font-weight:600;display:grid;place-items:center}
+.aisteps .btn{margin-top:8px;text-decoration:none}
+.aiprompt{width:100%;min-height:150px;border:1px solid var(--edge);border-radius:var(--r);padding:10px;font:inherit;font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg)}
+.aist{display:flex;gap:10px;align-items:center;font-size:14px;line-height:1.5}
+.spin{flex:none;width:16px;height:16px;border:2px solid var(--line2);border-top-color:var(--orange);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* ===== 몽실몽실하고 모던하게 ===== */
+body{letter-spacing:0;line-height:1.5}
+/* 둥근 글꼴은 제목·버튼·숫자에만 */
+.top h1,.hero h2,.exp-head .t,.gintro b,.sheet h3,.aibox .t,.logo b,.card .t,.step .t,.gh,.gcard .t,.gacc b,.btn,.tabs button,.stats b,.rs-step .h b,.secname,.cbar b,.av,.step .no,.gnext li:before,.rs-step .h .mono,.gpick button,.msrc button,.aiprov button,.tag{font-family:var(--round);font-weight:400;letter-spacing:0}
+b,strong{font-weight:700}
+.label{font-size:13px;color:var(--muted)}
+/* 위·아래 막대 */
+.top{border-bottom:0;box-shadow:0 1px 0 var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);height:56px}
+.top h1{font-size:18px}
+.bottom{border-top:0;box-shadow:0 -6px 24px rgba(37,43,59,.07);background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+/* 버튼 */
+.btn{height:54px;border:0;border-radius:17px;font-size:17px}
+.btn.black,.btn.orange{background:var(--orange);color:#fff;box-shadow:0 6px 16px rgba(82,102,224,.26)}
+.btn.ghost{background:var(--orange-soft);color:var(--accent-ink)}
+.btn:active{transform:scale(.98);opacity:1}
+.btn.sm{height:42px;border-radius:13px;font-size:15px;box-shadow:none}
+.tag{font-size:12px;border:0;background:var(--bg);color:var(--muted);padding:3px 10px;border-radius:99px}
+.tag.o{background:var(--orange-soft);color:var(--accent-ink)}
+.tag.g{background:var(--bg);color:var(--muted)}
+.toast{border-radius:99px;padding:12px 22px;font-size:15px}
+.toast b{color:var(--hl)}
+/* 첫 화면 */
+.login{background:linear-gradient(180deg,#fff 30%,var(--bg) 100%)}
+.logo-mark{border:0;border-radius:13px;background:var(--orange);color:#fff;width:38px;height:38px}
+.logo b{font-size:22px}
+.hero h2{font-size:40px;line-height:1.3;letter-spacing:-.01em}
+.hero h2 em{font-style:normal;display:inline-block;background:var(--hl);color:var(--ink);padding:0 12px 2px;border-radius:16px;transform:rotate(-2deg)}
+.hero p{font-size:16px;line-height:1.7}
+.invite{border:0;background:var(--orange-soft);border-radius:18px;padding:14px 16px}
+.login .gf input{background:#fff;border-color:var(--line2)}
+.note{font-size:13px;line-height:1.6}
+/* 목록 */
+.sect-h{padding:22px 20px 4px}
+.card{margin:10px 16px 0;width:calc(100% - 32px);border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff;box-shadow:var(--shadow)}
+.card .t{font-size:18px}
+.card .s{font-size:14px}
+.bar{height:8px;border:0;border-radius:99px;background:var(--line)}
+.members{margin:12px 16px 0;width:calc(100% - 32px);border:0;border-radius:18px;background:var(--bg)}
+.av.me{background:var(--orange);color:#fff}
+.empty .big{border:0;border-radius:20px;background:var(--orange-soft);color:var(--orange)}
+/* 실험 화면 */
+.exp-head{border-bottom:0;padding:18px 20px 4px}
+.exp-head .t{font-size:24px;line-height:1.3}
+.tabs{margin:12px 16px 2px;padding:4px;gap:4px;background:var(--bg);border:0;border-radius:16px}
+.tabs button{height:40px;border:0;border-radius:12px;font-size:15px;color:var(--muted)}
+.tabs button.on{background:#fff;color:var(--ink);border:0;box-shadow:0 1px 3px rgba(37,43,59,.14)}
+.secname{background:none;border:0;padding:22px 20px 4px;font-size:15px;color:var(--muted)}
+.step{margin:8px 16px;padding:16px 14px 16px 16px;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:var(--shadow)}
+.step.done{border-color:#D5DAF6}
+.step .no{width:30px;height:30px;border-radius:50%;background:var(--bg);color:var(--muted);display:grid;place-items:center;padding:0;font-size:14px}
+.step.done .no{background:var(--hl);color:var(--ink)}
+.step .t{font-size:18px}
+.step .d{font-size:14.5px;line-height:1.55}
+.thumbs img,.thumbs .more{border:0;border-radius:11px}
+.shot{width:48px;height:48px}
+.more-link{font-size:13.5px;color:var(--accent-ink);text-underline-offset:4px}
+.hint{margin:14px 16px;border-radius:18px;padding:14px 16px;font-size:14.5px;line-height:1.6}
+/* 단계 상세 */
+.instr{margin:12px 16px 0;padding:16px;border:0;border-radius:18px;background:var(--bg);font-size:15.5px;line-height:1.7}
+.ph{border-radius:18px;border-color:var(--line);box-shadow:var(--shadow)}
+.addph{border:1.5px dashed #C3CAF3;border-radius:18px;background:var(--orange-soft);color:var(--accent-ink);font-size:15px}
+.obs textarea{border-radius:16px;border-color:transparent;background:var(--bg);font-size:15.5px}
+.obs textarea:focus{background:#fff;border-color:var(--orange);box-shadow:0 0 0 4px var(--orange-soft)}
+/* 입력 칸 */
+.gf input,.gf select,.gf textarea,.grole select,.mcalc select,.sheet input{height:48px;border-radius:14px;border-color:transparent;background:var(--bg);font-size:16px}
+.gf textarea{height:auto;font-size:14px}
+.gf textarea.txt{font-size:15.5px}
+.gf input:focus,.gf select:focus,.gf textarea:focus,.sheet input:focus{background:#fff;border-color:var(--orange);box-shadow:0 0 0 4px var(--orange-soft)}
+.aibox .gf input{background:#fff}
+.mv,.mn{border-radius:11px;font-family:var(--sans);font-weight:700}
+/* 결과 모아보기 */
+.stats{margin:14px 16px 0;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+.stats b{font-size:26px}
+.rs-step{border-bottom:0;padding:14px 20px}
+.rs-photos figure{border-radius:14px;border-color:var(--line)}
+.rs-obs{border-radius:14px;background:var(--bg)}
+.rpst{border-bottom:0;padding:14px 16px 2px}
+.rpst span{border:0;background:var(--bg);color:var(--muted);font-size:13px;padding:5px 12px}
+.rpst span.ok{background:var(--orange-soft);color:var(--accent-ink)}
+.rpst span.no{background:var(--bg);color:var(--muted)}
+/* 결과 분석 */
+.gintro{padding:20px 20px 0;font-size:15px}
+.gintro b{font-size:22px;line-height:1.35}
+.gh{padding:26px 20px 0;font-size:18px}
+.gnote{padding:8px 20px 0;font-size:14px}
+.gpick{padding:12px 16px 0}
+.gpick button{border:0;background:var(--bg);font-size:15px;padding:9px 15px}
+.gpick button.on{background:var(--orange);color:#fff}
+.gcards{margin-top:6px}
+.gcard{margin:8px 16px;padding:16px;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:var(--shadow)}
+.gcard .ic{width:42px;height:42px;border-radius:14px}
+.gcard .t{font-size:17.5px}
+.gcard .d{font-size:15px}
+.gcard .s{font-size:13.5px}
+.gcard .add{font-family:var(--round);font-weight:400;font-size:14px;border:0;background:var(--orange-soft);color:var(--accent-ink);padding:8px 14px}
+.gcard .add[disabled]{background:var(--bg);color:var(--muted)}
+.gscroll{margin:12px 16px 0;border:1px solid var(--line);border-radius:18px;background:#fff}
+.gscroll.mg{border-radius:0}
+.gt{font-size:15px}
+.gt thead th{font-size:13px;background:var(--bg);border-bottom-color:var(--line)}
+.gacc{margin:8px 16px 0;width:calc(100% - 32px);border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
+.gacc b{font-size:17px}
+.gacc span{font-size:13.5px}
+.gacc.on{background:var(--orange-soft);border-color:transparent;box-shadow:none}
+.gacc.on i{background:#fff;color:var(--accent-ink)}
+.gaccb{border-bottom:0;background:none;padding-bottom:10px}
+.aibox{margin:14px 16px 0;border-radius:22px;padding:18px}
+.aibox .t{font-size:19px}
+.aiprov{border:0;padding:4px;gap:4px;border-radius:15px}
+.aiprov button{border:0!important;border-radius:11px;height:40px;font-size:15px}
+.msrc{margin:14px 16px 0;border:0;padding:4px;gap:4px;background:var(--bg);border-radius:16px}
+.msrc button{border:0!important;border-radius:12px;height:40px;font-size:14.5px;color:var(--muted)}
+.msrc button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(37,43,59,.14)}
+.aisteps li:before{font-family:var(--round);font-weight:400;font-size:13px}
+.aiprompt{border-radius:16px}
+.drop{border:1.5px dashed #C3CAF3;border-radius:22px;background:var(--orange-soft);color:var(--accent-ink)}
+.chip{border:0;background:var(--bg)}
+.sheet{border-radius:28px 28px 0 0;padding-top:26px}
+.sheet h3{font-size:21px}
+.mem{padding:14px 20px}
+.gwarn{border:0;border-radius:16px;background:#FBEFEE}
+@media(min-width:560px){#phone{border:0;border-radius:32px;box-shadow:0 24px 60px rgba(37,43,59,.12)}}
+</style>
+</head>
+<body>
+<div id="phone"></div>
+<input type="file" id="cam" accept="image/*" capture="environment" hidden>
+<input type="file" id="gal" accept="image/*" multiple hidden>
+<input type="file" id="doc" accept=".pdf,.pptx,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,image/*" multiple hidden>
+<input type="file" id="gfile" accept=".pdf,.pptx,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,image/*" multiple hidden>
+<input type="file" id="imp" accept=".json,application/json,text/plain" hidden>
+<input type="file" id="rfile" accept=".pdf,.pptx,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,image/*" multiple hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- icons ---------- */
+const I={
+ home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9h-5v-6h-6v6H4z"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>',
+ cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+ flask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"/><path d="M7.5 14h9"/></svg>',
+ doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+ users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c1.8.7 3 2.5 3.5 5.2"/></svg>',
+ edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+ pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+ img:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>'
+};
+
+/* ---------- data ---------- */
+let ME='나'; // 지금 쓰는 사람의 이름. Claude 계정에서 가져오거나 첫 화면에서 직접 적음
+// 팀에서 기록을 남긴 사람들: 나 + 사진·메모·측정값에 이름이 남은 사람
+function people(t){const out=[ME],add=n=>{if(n&&!out.includes(n))out.push(n)};
+  (t?t.experiments:[]).forEach(e=>e.steps.forEach(q=>{q.photos.forEach(ph=>add(ph.by));if(q.obs)add(q.obs.by);(q.meas||[]).forEach(m=>add(m.by))}));
+  return out.map(n=>({name:n,me:n===ME}))}
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2=n=>String(n).padStart(2,'0');
+const fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`};
+const fmtDate=t=>{const d=new Date(t);return `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}`};
+const code=()=>Array.from({length:8},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+
+// 수업 자료(실험 4 MOF-5 PPT)에서 추출된 것으로 보여줄 단계
+const EXTRACT={
+  no:'실험 4', title:'MOF-5 합성 및 분석', course:'무기화학실험',
+  goal:'아연(II) 이온과 테레프탈산의 반응으로 미세 다공성 배위 고분자 MOF-5를 합성하고 물성을 분석한다.',
+  theory:'MOF(Metal-organic Framework)는 금속 이온이나 금속 뭉치가 배위 결합을 통해 다리 리간드로 연결된 고체 화합물이다. MOF-5는 Zn(II) 이온과 테레프탈산(H₂BDC)이 반응하여 Zn₄O(BDC)₃ 조성을 갖는 전하 중성의 결정성 고체로 얻어진다.\n용매열 반응은 유기 용매 속에서 고온·고압으로 반응물을 결합시켜 결정 구조를 만드는 방법이다.\nPXRD는 Bragg 법칙(nλ = 2d sinθ)을 만족할 때 생기는 회절 패턴으로 결정 구조를 확인하고, TGA는 온도에 따른 질량 변화로 손님 분자의 휘발 온도와 골격의 분해 온도를 확인한다.',
+  steps:[
+   ['A. MOF-5 합성','시약 넣고 녹이기','Zn(NO₃)₂·6H₂O 0.446 g과 테레프탈산 0.25 g을 30 mL 바이알에 넣고 NMP 15 mL에 녹인다.'],
+   ['A. MOF-5 합성','바이알 밀봉','바이알 뚜껑을 잘 닫고, 이음새 부분을 테플론 테이프로 감싸서 밀봉한다.'],
+   ['A. MOF-5 합성','오븐 가열','온도가 100 ℃로 고정된 오븐에 바이알을 넣고 하루 동안 가열한다.'],
+   ['A. MOF-5 합성','상온 냉각 · 결정 확인','반응 후 반응 용액을 상온에서 식힌다. 결정이 반응 용기 벽면에 생성된 것을 확인한다.'],
+   ['A. MOF-5 합성','코니칼 튜브로 옮겨 세척','합성한 MOF-5를 코니칼 튜브에 넣고 wash 한다.'],
+   ['B. MOF 분석','PXRD 측정','분말 X-선 회절법(PXRD)으로 합성한 MOF의 회절 패턴을 분석한다. (2층 XRD실 212호)'],
+   ['B. MOF 분석','TGA 측정','TGA로 손님 분자의 휘발 온도, 골격의 분해 온도, ZnO의 양을 확인한다.'],
+   ['B. MOF 분석','77 K N₂ 흡착 분석','77 K N₂ 흡착 분석으로 합성된 MOF의 표면적과 기공 크기 등을 확인한다.']
+  ]
+};
+
+// 수업 자료(실험 3 코발트 착물 PPT)의 "실험 방법"에서 추출된 것으로 보여줄 단계
+const EXTRACT3={
+  no:'실험 3', title:'코발트 착물의 입체 화학', course:'무기화학실험',
+  goal:'다양한 농도의 코발트 착물을 준비하고 용액의 색을 확인한다. 코발트 착물의 UV-vis 흡수 스펙트럼 비교를 통해 CFT를 이해한다.',
+  theory:'결정장 이론(CFT)에서는 리간드가 만드는 장 때문에 d 오비탈의 에너지가 갈라진다. 팔면체(Δo)와 사면체(Δt)는 갈라지는 방식과 크기가 다르다.\n[Co(H₂O)₆]²⁺(팔면체)의 λmax는 약 510 nm이고, SCN⁻이 배위하여 사면체 착물이 되면 λmax가 약 610 nm로 나타난다.\n전자 전이의 세기는 스핀 선택 규칙(ΔS = 0)과 Laporte 선택 규칙(g ↔ u)의 영향을 받는다. 수업 자료에 따르면 d–d 전이의 ε은 팔면체에서 약 10~50, 사면체에서 약 500이다.',
+  steps:[
+   ['A. 용액 준비','0.3 M 코발트 수용액 만들기','Co(NO₃)₂·6H₂O, 3차 증류수, 50 mL 부피 플라스크를 사용하여 0.3 M 코발트 수용액 50 mL를 만든다.'],
+   ['A. 용액 준비','0.1 M 코발트 수용액 만들기','0.3 M 코발트 수용액 20 mL를 바이알에 덜고, 남은 용액을 묽혀 0.1 M 코발트 수용액을 100 mL 비커에 만든다.'],
+   ['A. 용액 준비','3 M KSCN 수용액 만들기','KSCN, 3차 증류수, 50 mL 부피 플라스크를 사용하여 3 M KSCN 수용액 50 mL를 만든다.'],
+   ['A. 용액 준비','혼합 용액 3가지 만들기','0.1 M 코발트 수용액(5 mL)과 3 M KSCN 수용액(각각 5 mL, 10 mL, 15 mL)을 20 mL 바이알에 넣고 섞어서 3가지 혼합 용액을 만든다.'],
+   ['B. UV-Vis 측정','흡수 스펙트럼 측정','0.3 M, 0.1 M 코발트 수용액 2가지와 혼합 용액 3가지, 총 5가지 용액에 대한 UV-Vis 흡수 스펙트럼을 측정한다.'],
+   ['B. UV-Vis 측정','농도에 따른 흡광도 확인','착물의 농도에 따른 흡광도 차이를 확인한다.'],
+   ['B. UV-Vis 측정','혼합 비율에 따른 변화 관찰','혼합물의 양에 따른 UV-Vis 흡수 스펙트럼 변화를 관찰한다.']
+  ]
+};
+
+const EXTRACT1={
+  no:'실험 1', title:'Cucurbit[6]uril의 합성 및 금속 이온과의 반응', course:'무기화학실험',
+  goal:'내부에 손님 분자를 가둘 수 있는 공간이 있으며 금속 이온과 배위 결합을 할 수 있는 쿠커비투릴을 합성하고, 금속 이온과의 착물을 형성시킨다.',
+  theory:'초분자 화학은 비공유 결합 상호작용으로 만들어지는 초분자를 다룬다. Cucurbit[n]uril(CB[n])은 글리콜우릴 단위가 고리로 이어진 주인(host) 분자로, 안쪽은 소수성 공간이고 입구에서는 양이온과 이온–쌍극자 상호작용을 한다. CB[6]의 입구 지름은 3.9 Å, 안쪽 지름은 5.8 Å, 높이는 9.1 Å이다.\n반응식: 1 Glyoxal + 2 Urea → 1 Glycoluril, 6 Glycoluril + 12 Formaldehyde → 1 Cucurbit[6]uril.',
+  steps:[
+   ['A-1. Glycoluril 합성','시약 준비','Glyoxal 10.0 mL(87.2 mmol)와 Urea 13.7 g(227 mmol)을 준비한다.'],
+   ['A-1. Glycoluril 합성','가열 교반','Glyoxal과 Urea를 100 mL 삼각 플라스크에 차례로 넣고 80 ℃에서 20분 동안 교반한다. (Urea가 점점 녹으며 투명해짐)'],
+   ['A-1. Glycoluril 합성','HCl 첨가','Urea가 완전히 녹으면 HCl 1 mL를 피펫으로 첨가한 후 80 ℃에서 40분 이상 교반한다.'],
+   ['A-1. Glycoluril 합성','여과 · 건조 · 무게 측정','하얀색 침전물이 많이 생성되면 가열을 멈추고 상온에서 식힌다. 감압 여과로 거르고 3차 증류수로 씻은 뒤, 오븐에서 건조하고 무게를 측정한다.'],
+   ['A-2. Cucurbit[6]uril 합성','시약 넣기','합성한 Glycoluril 2.0 g과 Formaldehyde 2.5 mL를 100 mL 비커에 순서대로 넣고 1 M HCl 용액 1 mL를 첨가한다.'],
+   ['A-2. Cucurbit[6]uril 합성','가열 · 황산 첨가','80 ℃ 핫플레이트에서 가열하면서 유리 막대로 잘 저어 준다. 용액이 젤 형태가 되면 H₂SO₄ 5 mL를 천천히 dropwise한다. (황산 사용 시 보안경 착용)'],
+   ['A-2. Cucurbit[6]uril 합성','일주일 교반','마그네틱 바를 넣고 80 ℃에서 일주일간 교반한다. (진한 갈색 용액으로 변했다가 서서히 침전물 생성)'],
+   ['A-2. Cucurbit[6]uril 합성','침전 · 여과 · 건조','반응 용액을 상온으로 식힌 뒤 3차 증류수 200 mL가 담긴 500 mL 비커에 천천히 부어 침전을 만든다. 아세톤을 과량 첨가한 후 감압 여과하고, 3차 증류수로 충분히 씻어 산을 제거한 뒤 건조한다.'],
+   ['B. 금속 이온과의 반응','무게 측정 · 시약 준비','건조된 Cucurbit[6]uril의 무게를 측정하고 수득률을 계산한다. Cucurbit[6]uril 100 mg, 3차 증류수 20 mL, Na₂SO₄ 7 mg을 준비한다.'],
+   ['B. 금속 이온과의 반응','1시간 교반','100 mL 삼각 플라스크에 Cucurbit[6]uril과 Na₂SO₄를 넣고 3차 증류수를 첨가한 후 1시간 동안 교반한다.'],
+   ['B. 금속 이온과의 반응','침전 · 여과 · 건조','용액에 아세톤을 과량 첨가해 침전을 형성시킨다. 감압 여과로 침전을 거른 다음 아세톤으로 씻은 후 상온 건조한다.']
+  ]
+};
+const EXTRACT2={
+  no:'실험 2', title:'헤모글로빈 모델 화합물의 합성', course:'무기화학실험',
+  goal:'금속을 포함하는 생화학적 시스템에서 관찰되는 가역적 산소 결합 반응과 유사한 기능을 수행하는 코발트 착물을 합성한다. 적외선 분광법(IR spectroscopy)으로 합성한 코발트 착물을 분석한다.',
+  theory:'Salicylaldehyde 2분자와 Ethylenediamine 1분자가 축합 반응(−2H₂O)하여 Schiff base 리간드인 H₂salen을 만든다. H₂salen이 Co²⁺에 배위하면 Co(salen)(Salcomine)이 된다.\nCo(salen)에는 공기 중의 산소와 반응하는 활성형(갈색)과 특정 조건에서만 산소와 반응하는 불활성형(짙은 붉은색)이 있다. 이 실험은 일반 대기 조건에서 진행한다.\nIR 분광법에서는 작용기마다 신축 진동의 위치가 다르다. 수업 자료의 표에 따르면 C=O는 1850–1650 cm⁻¹, O–H는 3600–3200 cm⁻¹, C–O는 1300–900 cm⁻¹에 나타난다.',
+  steps:[
+   ['A. H₂salen 합성','시약 준비','메스 실린더로 Salicylaldehyde 3.4 mL, Ethylenediamine 1.1 mL, Ethyl Alcohol 50 mL를 준비한다. (두 시약은 닿으면 바로 반응하므로 메스 실린더는 반드시 따로 사용한다.)'],
+   ['A. H₂salen 합성','혼합 · 가열 교반','100 mL 삼각 플라스크에 Ethyl Alcohol을 먼저 넣은 후 나머지 시약들을 첨가하고, 50 ℃로 가열하며 5~10분간 교반한다.'],
+   ['A. H₂salen 합성','냉각','가열을 중단하고 5분간 용액을 상온에서 식힌 뒤, 얼음물에 플라스크를 담가 차갑게 식힌다. (노란색 침전물 형성)'],
+   ['A. H₂salen 합성','여과 · 건조 · 무게 측정','감압 여과(Ethanol washing)로 침전을 거른 다음 80 ℃ 오븐에서 10분 이상 건조한다. 수득률 계산을 위해 무게를 측정하고, IR 분석을 위한 시료를 소량 바이알에 담는다.'],
+   ['B. Co(salen) 합성','환류 장치 설치','H₂salen 1.0 g, ethanol 30 mL, 마그네틱 바를 250 mL 3구 둥근 바닥 플라스크에 넣고 reflux관을 설치한 뒤 120 ℃에서 교반한다.'],
+   ['B. Co(salen) 합성','코발트 용액 첨가','Co(OAc)₂·4H₂O 0.93 g을 증류수 5 mL에 녹인다. H₂salen이 녹으면 이 용액을 3 mL 주사기로 2~3번에 걸쳐 플라스크에 첨가한다.'],
+   ['B. Co(salen) 합성','가열 교반 · 냉각','약 15분간 가열 교반 후 뭉친 생성물이 풀어지면, 10분간 차가운 물에서 플라스크를 냉각한다.'],
+   ['B. Co(salen) 합성','여과 · 건조 · 무게 측정','감압 여과(Ethanol washing)로 침전을 거른다. 80 ℃ 오븐에서 30분 이상 건조하고 무게를 측정한 뒤, IR 분석을 위해 시료를 바이알에 담는다.'],
+   ['C. IR 분석','IR 스펙트럼 확인','합성한 H₂salen과 Co(salen)의 IR 스펙트럼에서 작용기의 신호 위치를 확인한다.']
+  ]
+};
+
+function defaultState(){
+  return {loggedIn:false,me:{name:''},teams:[{id:'t1',name:'무기화학실험 2조',course:'무기화학실험',experiments:[]}]};
+}
+
+/* ---------- storage (이 폰 안에만 저장) ---------- */
+let S=defaultState();
+const DB={db:null,
+  open(){return new Promise(res=>{try{const r=indexedDB.open('labstep-demo',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{this.db=r.result;res(true)};r.onerror=()=>res(false)}catch(e){res(false)}})},
+  get(){return new Promise(res=>{try{const t=this.db.transaction('kv').objectStore('kv').get('state');t.onsuccess=()=>res(t.result||null);t.onerror=()=>res(null)}catch(e){res(null)}})},
+  put(v){try{this.db&&this.db.transaction('kv','readwrite').objectStore('kv').put(v,'state')}catch(e){}}
+};
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>DB.put(JSON.parse(JSON.stringify(S))),300)}
+
+/* ---------- nav ---------- */
+let V={name:'login'};const hist=[];
+function go(v,push=true){if(push)hist.push(V);V=v;render();window.scrollTo(0,0)}
+function back(){V=hist.pop()||{name:'teams'};render();window.scrollTo(0,0)}
+const team=()=>S.teams.find(t=>t.id===V.tid);
+const exp=()=>team()?.experiments.find(e=>e.id===V.eid);
+const stepOf=()=>exp()?.steps.find(s=>s.id===V.sid);
+
+function toast(html){const t=document.getElementById('toast');t.innerHTML=html;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200)}
+// 위쪽 막대: 뒤로 · 제목 · (화면별 버튼) · 처음 화면(팀 목록)으로
+const topbar=(title,right='')=>`<div class="top"><button class="iconbtn" data-a="back" aria-label="뒤로">${I.back}</button><h1>${title}</h1>${right}<button class="iconbtn" data-a="home" aria-label="처음 화면으로">${I.home}</button></div>`;
+// 동그라미 안 글자: 한글 이름은 뒤 두 글자(보영), 영문 이름은 낱말의 첫 글자(BY)
+const initial=n=>{n=String(n||'').trim();return esc(/[가-힣]/.test(n)?n.replace(/[^가-힣]/g,'').slice(-2):n.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase())};
+
+/* ---------- render ---------- */
+const $=s=>document.querySelector(s);
+function render(){
+  const f={login,teams,team:teamV,members,add,exp:expV,step:stepV,edit:editV}[V.name];
+  $('#phone').innerHTML=f();
+  if(V.focusNew){const el=document.querySelector('.ph.new input');if(el){el.scrollIntoView({block:'center'});setTimeout(()=>el.focus(),250)}V.focusNew=false}
+}
+
+function login(){
+  const m=S.me||{},known=m.src==='claude'&&m.name;
+  return `<div class="login">
+   <div class="logo"><div class="logo-mark">${I.flask}</div><b>LabStep</b><span class="tag g">가칭</span></div>
+   <div class="hero">
+     <h2>단계를 누르고,<br>찍으면 정리 <em>끝!</em></h2>
+     <p>실험 사진이 촬영하는 순간 해당 단계에 붙어요. 갤러리에서 다시 고를 필요가 없어요.</p>
+   </div>
+   ${known?`<div class="invite"><div class="label">Claude 계정</div><b>${esc(m.name)}</b> 님 이름으로 기록해요</div>`
+     :`<div class="gf" style="padding:0 0 12px"><label class="label" for="myname">내 이름 · 사진과 메모에 남아요</label><input id="myname" value="${esc(m.name||'')}" placeholder="예: 홍길동" autocomplete="name" enterkeyhint="go"></div>`}
+   <button class="btn black" data-a="login">시작하기</button>
+   <div class="note">${known?'이름은 Claude 계정에서 가져왔어요.':IN_CLAUDE?'Claude에 로그인한 상태로 열면 이름이 자동으로 들어가요.':''} 기록은 이 기기에 저장돼요.</div>
+  </div>`;
+}
+
+function teams(){
+  return `<div class="top"><div class="logo" style="padding-left:10px;flex:1"><div class="logo-mark" style="width:28px;height:28px">${I.flask}</div><b style="font-size:17px">LabStep</b></div><button class="mini" data-a="logout">나가기</button></div>
+  <div class="content">
+   <div class="pad" style="padding-bottom:0"><div style="font-size:15px"><b>${esc(ME)}</b> 님</div><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.</div></div>
+   <div class="sect-h"><span class="label">내 팀</span><span class="label">${S.teams.length}</span></div>
+   ${S.teams.map(t=>{const n=t.experiments.length;return `<button class="card" data-a="openTeam" data-id="${t.id}">
+     <div class="t">${esc(t.name)}</div><div class="s">기록한 사람 ${people(t).length}명 · 실험 ${n}개</div></button>`}).join('')}
+   <div class="pad" style="text-align:center"><button class="mini" data-a="allFile">전체 백업 파일 만들기</button> &nbsp;·&nbsp; <button class="mini" data-a="impPick">백업·실험 파일 가져오기</button><br><button class="mini" data-a="reset" style="margin-top:14px">기록 모두 지우기</button></div>
+  </div>
+  <div class="bottom"><button class="btn black" data-a="newTeam">${I.plus}팀 만들기</button></div>`;
+}
+
+function avRow(t){return people(t).slice(0,5).map(m=>`<span class="av ${m.me?'me':''}">${initial(m.name)}</span>`).join('')}
+function progress(e){const d=e.steps.filter(s=>s.photos.length).length;return [d,e.steps.length]}
+
+function teamV(){
+  const t=team();
+  return `${topbar(esc(t.name),`<button class="iconbtn" data-a="members" aria-label="팀원">${I.users}</button>`)}
+  <div class="content">
+   <button class="members" data-a="members">${avRow(t)}<span class="txt">기록한 사람 ${people(t).length}명</span><span class="mono" style="font-size:12px">›</span></button>
+   <div class="sect-h"><span class="label">실험</span><span class="label">${t.experiments.length}</span></div>
+   ${t.experiments.length?t.experiments.map(e=>{const [d,n]=progress(e);const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);return `<button class="card" data-a="openExp" data-id="${e.id}">
+      <div class="label">${esc(e.no)} · ${fmtDate(e.created)}</div>
+      <div class="t" style="margin-top:4px">${esc(e.title)}</div>
+      <div class="s">${d}/${n} 단계 기록 · 사진 ${ph}장</div>
+      <div class="bar"><i style="width:${n?d/n*100:0}%"></i></div></button>`}).join('')
+   :`<div class="empty"><div class="big">${I.doc}</div>아직 실험이 없어요.<br>수업 자료를 올리면 실험 단계를 자동으로 만들어 드려요.</div>`}
+   <div class="pad" style="text-align:center"><button class="mini" data-a="impPick">팀원에게 받은 실험 파일 가져오기</button></div>
+  </div>
+  <div class="bottom"><button class="btn black" data-a="addExp">${I.plus}실험 추가 (수업 자료 올리기)</button></div>`;
+}
+
+function members(){
+  const t=team(),ps=people(t),fromClaude=!!(S.me&&S.me.src==='claude');
+  return `${topbar('팀원')}
+  <div class="content">
+   <div class="sect-h"><span class="label">기록한 사람</span><span class="label">${ps.length}명</span></div>
+   ${ps.map(m=>`<div class="mem"><span class="av ${m.me?'me':''}">${initial(m.name)}</span>
+     <div class="n"><b>${esc(m.name)}</b> ${m.me?'<span class="tag o">나</span>':''}<div>${m.me?(fromClaude?'Claude 계정의 이름':'직접 적은 이름'):'사진·메모에 남은 이름'}</div></div>
+     ${m.me&&!fromClaude?`<button class="mini" data-a="rename">이름 바꾸기</button>`:''}</div>`).join('')}
+   <div class="hint">기록은 이 기기에 저장돼요. 팀원과 같이 쓰려면 실험의 "결과 모아보기" 맨 아래에서 <b>실험 파일</b>을 만들어 보내세요. 받은 사람이 "받은 파일 합치기"를 누르면 사진·메모·측정값이 합쳐져요. 서로의 화면에 바로 나타나는 실시간 공유와 초대는 아직 없어요.</div>
+  </div>`;
+}
+
+function add(){
+  const st=V.stage||'pick';
+  if(st==='pick'){const pv=curProv(),P=AI_PROV[pv];
+   return `${topbar('실험 추가')}
+   <div class="content">
+    <div class="pad" style="padding-bottom:0"><div class="label">1 / 2 · 수업 자료</div><p style="margin-top:8px;font-size:15px;line-height:1.6">실험 PPT나 PDF를 올리면 AI가 <b>실험 과정</b> 부분을 찾아 단계로 나눠요. 나눈 단계는 다음 화면에서 고칠 수 있어요.</p>
+      <div class="aiprov" role="group" aria-label="사용할 AI" style="margin:14px 0 0">${Object.keys(AI_PROV).map(k=>`<button class="${k===pv?'on':''}" data-a="aiProv" data-k="${k}" aria-pressed="${k===pv}">${AI_PROV[k].name}</button>`).join('')}</div></div>
+    ${pv==='claude'?`<button class="drop" data-a="pickDoc">${I.doc}<b>PPT · PDF · 사진 올리기</b><span>올린 자료는 Claude로 전송돼요</span></button>`
+     :`<div class="aibox"><ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy" data-k="steps">지시문 복사</button></li>
+        <li>${P.name}를 열어 실험 PPT나 PDF를 첨부하고, 복사한 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li>
+        <li>${P.name}의 답을 통째로 복사해서 아래 칸에 붙여넣어요.</li></ol>
+        <textarea class="aiprompt" data-d="stepans" style="background:#fff" placeholder="${P.name}의 답 붙여넣기" aria-label="${P.name}의 답">${esc(V.stepans||'')}</textarea>
+        <button class="btn orange" data-a="stepsPaste" style="margin-top:10px">단계 만들기</button></div>`}
+    <div class="or">또는</div>
+    <div class="pad" style="display:flex;flex-direction:column;gap:8px"><div class="label">예시 자료로 해보기 · 미리 정리해 둔 단계</div>${SAMPLES.map((q,i)=>`<button class="btn ghost" data-a="sampleDoc" data-n="${i}" style="justify-content:flex-start;text-align:left"><span class="mono" style="color:var(--orange);margin-right:10px">${q.data.no.replace('실험 ','0')}</span>${esc(q.data.title)}</button>`).join('')}</div>
+   </div>`}
+  if(st==='extracting') return `${topbar('실험 추가')}
+   <div class="ext"><div class="file">${I.doc}<span>${esc(V.file)}</span></div><div class="scan"><i></i></div><p id="aimsg">${esc(AIS.busy?AIS.msg:'실험 과정을 찾아 단계로 나누는 중…')}</p>${AIS.busy?`<button class="btn ghost sm" data-a="aiStop" style="margin-top:16px">멈추기</button>`:''}</div>`;
+  // review
+  const dr=V.draft;
+  return `${topbar('추출 결과 확인')}
+   <div class="content">
+    <div class="pad" style="padding-bottom:14px;border-bottom:1px solid var(--line)"><div class="label">2 / 2 · 확인하고 고치기</div>
+      <div class="g2" style="grid-template-columns:110px minmax(0,1fr);margin-top:2px"><div class="gf"><label class="label" for="d-no">실험 번호</label><input id="d-no" data-d="no" value="${esc(dr.no)}" placeholder="예: 실험 3"></div><div class="gf"><label class="label" for="d-title">제목</label><input id="d-title" data-d="title" value="${esc(dr.title)}"></div></div>
+      ${dr.goal?`<div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">${esc(dr.goal)}</div>`:''}
+      <div style="font-size:12px;margin-top:10px"><span class="tag o">${dr.steps.length}단계</span> &nbsp;틀린 부분은 바로 고칠 수 있어요</div></div>
+    ${dr.ai?`<div class="hint" style="margin-top:14px">${esc(dr.who||'Claude')}가 자료를 읽고 나눈 단계예요. 시약의 양과 순서가 자료와 맞는지 확인하세요.${dr.notes?`<br>메모: ${esc(dr.notes)}`:''}</div>`:''}
+    ${editorHTML(dr.steps)}
+   </div>
+   <div class="bottom"><button class="btn orange" data-a="createExp">이 단계로 시작하기</button></div>`;
+}
+
+function editorHTML(steps){
+  let out='',sec=null;
+  steps.forEach((s,i)=>{
+    if(s.section!==sec){sec=s.section;out+=`<div class="ed-sec"><span class="label">구간</span><input value="${esc(sec)}" data-sec="${esc(sec)}" aria-label="구간 이름"></div>`}
+    out+=`<div class="ed"><div class="no">${pad2(i+1)}</div><div class="f">
+      <input value="${esc(s.title)}" data-k="title" data-i="${i}" placeholder="단계 이름">
+      <textarea data-k="detail" data-i="${i}" placeholder="설명 (선택)">${esc(s.detail)}</textarea></div>
+      <div class="ctl"><button data-a="up" data-i="${i}" ${i===0?'disabled':''} aria-label="위로">↑</button><button data-a="down" data-i="${i}" ${i===steps.length-1?'disabled':''} aria-label="아래로">↓</button><button class="x" data-a="rm" data-i="${i}" aria-label="삭제">✕</button></div></div>`;
+  });
+  out+=`<div class="pad"><button class="btn ghost" data-a="addStep">${I.plus}단계 추가</button></div>`;
+  return out;
+}
+
+function expV(){
+  const e=exp(),[d,n]=progress(e),tab=V.tab||'steps';
+  const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);
+  const head=`${topbar(esc(e.no)+' · '+esc(e.title),`<button class="iconbtn" data-a="editSteps" aria-label="단계 편집">${I.edit}</button>`)}
+   <div class="exp-head"><div class="label">${esc(team().name)} · ${esc(e.course)}</div><div class="t">${esc(e.title)}</div>
+    <div class="row"><span>${d}/${n} 단계 기록 · 사진 ${ph}장</span><span class="mono" style="font-size:12px">${Math.round(n?d/n*100:0)}%</span></div>
+    <div class="bar"><i style="width:${n?d/n*100:0}%"></i></div></div>
+   <div class="tabs"><button class="${tab==='steps'?'on':''}" data-a="tab" data-t="steps">단계</button><button class="${tab==='result'?'on':''}" data-a="tab" data-t="result">결과 모아보기</button><button class="${tab==='gap'?'on':''}" data-a="tab" data-t="gap">결과 분석</button></div>`;
+  if(tab==='result') return head+resultHTML(e);
+  if(tab==='gap') return head+gapHTML(e);
+  let out='',sec=null;
+  e.steps.forEach((s,i)=>{
+    if(s.section!==sec){sec=s.section;out+=`<div class="secname">${esc(sec)}</div>`}
+    const th=s.photos.slice(0,4).map(p=>`<img src="${p.src}" alt="">`).join('')+(s.photos.length>4?`<span class="more">+${s.photos.length-4}</span>`:'');
+    out+=`<div class="step ${s.photos.length?'done':''}" data-a="shoot" data-id="${s.id}">
+      <div class="no">${pad2(i+1)}</div>
+      <div class="body"><div class="t">${esc(s.title)}</div><div class="d">${esc(s.detail)}</div>
+        ${s.photos.length?`<div class="thumbs">${th}</div>`:''}
+        <button class="more-link" data-a="openStep" data-id="${s.id}">${s.photos.length?`사진 ${s.photos.length}장 · 메모 보기`:'자세히 · 메모'} ›</button></div>
+      <div class="side"><span class="shot">${I.cam}</span><span class="cnt">${s.photos.length}</span></div></div>`;
+  });
+  return head+`<div class="hint">단계를 누르면 카메라로 찍을지 앨범에서 고를지 고를 수 있어요. 사진은 그 단계에 자동으로 붙어요.</div>`+out+`<div style="height:30px"></div>`;
+}
+
+function resultHTML(e){
+  const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);
+  const people=new Set();e.steps.forEach(s=>s.photos.forEach(p=>people.add(p.by)));
+  let out=`<div class="stats"><div><b>${progress(e)[0]}/${e.steps.length}</b><span>기록한 단계</span></div><div><b>${ph}</b><span>사진</span></div><div><b>${people.size}</b><span>촬영한 팀원</span></div></div>`;
+  const rp=RP(),area=(k,label,ph,h=96)=>`<div class="gf"><label class="label">${label}</label><textarea class="txt" data-rp="${k}" style="min-height:${h}px" placeholder="${ph}">${esc(rp[k])}</textarea></div>`;
+  gSync(e);
+  {const ok=[['목적',rp.goal.trim()],['원리',rp.theory.trim()],['방법',e.steps.length],['결과',ph||allMeas(e).length||e.steps.some(q=>q.obs.text)||(e.gap&&e.gap.rows.length)],['결론',rp.concl.trim()],['고찰',rp.disc.trim()]];
+   out+=`<div class="rpst" aria-label="보고서 준비 상태">${ok.map(([n,v])=>`<span class="${v?'ok':'no'}">${n} ${v?'✓':'비어 있음'}</span>`).join('')}</div>`}
+  out+=`<div class="secname">보고서 글 · 목적과 원리</div>`+area('goal','실험 목적','이 실험으로 확인하려는 것')+area('theory','실험 원리','실험에 쓰인 이론과 분석 방법',150)+`<div class="gnote" style="padding-bottom:14px">수업 자료에서 가져온 내용이에요. 고치면 PDF에 그대로 들어가요.</div>`;
+  let sec=null;
+  e.steps.forEach((s,i)=>{
+    if(s.section!==sec){sec=s.section;out+=`<div class="secname">${esc(sec)}</div>`}
+    out+=`<div class="rs-step"><div class="h"><span class="mono">${pad2(i+1)}</span><b>${esc(s.title)}</b></div>
+     ${s.photos.length?`<div class="rs-photos">${s.photos.map(p=>`<figure><img src="${p.src}" alt="" data-a="view" data-sid="${s.id}" data-pid="${p.id}"><figcaption><span>${esc(p.by)} · ${fmt(p.at)}</span>${p.memo?'<br>'+esc(p.memo):''}</figcaption></figure>`).join('')}</div>`:'<div class="rs-none">사진 없음</div>'}
+     ${(s.meas||[]).length?(mt=>`<div class="rs-meas"><span class="label">측정값</span><div class="gscroll" style="margin-top:6px;border:1px solid var(--line)"><table class="gt"><thead><tr>${mt.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${mt.rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`)(measMini(s)):''}
+     ${s.obs.text?`<div class="rs-obs"><b>관찰</b> · ${esc(s.obs.text)}<div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(s.obs.by)} · ${fmt(s.obs.at)}</div></div>`:''}
+    </div>`;
+  });
+  gSync(e);
+  const g=e.gap&&e.gap.rows.length?e.gap:null;
+  out+=`<div class="secname">실험 결과 정리 · 계산과 그래프</div>`+(g?gSumBody(g,gRes(g))+`<div class="gnote" style="padding-bottom:14px">"결과 분석" 탭의 표에서 계산했어요. PDF에는 결과 열마다 그래프와 요약표가 들어가요.</div>`
+    :`<div class="rs-none" style="padding:14px 18px">단계에서 측정값을 적으면 그래프와 요약표가 여기에 나와요.</div>`);
+  out+=`<div class="secname">보고서 글 · 결론과 고찰</div>`+
+    area('concl','실험 결론','결과에서 알 수 있는 것',130)+(g?`<div class="grow" style="padding-top:8px"><button class="btn ghost sm" data-a="rpAuto" data-k="concl">계산 결과 넣기</button></div>`:'')+
+    area('disc','고찰','알게 된 점, 오차 원인 등',130)+(g?`<div class="grow" style="padding-top:8px"><button class="btn ghost sm" data-a="rpAuto" data-k="disc">확인할 점 넣기</button></div>`:'')+
+    `<div class="gnote">버튼은 표에서 계산한 사실만 넣어요. 해석과 원인은 직접 써야 해요.</div>`;
+  out+=`<div class="secname">팀원과 주고받기</div><div class="gnote" style="padding-top:4px">이 실험의 사진·메모·측정값을 파일 하나로 만들어요. 카카오톡 등으로 보내면, 받은 팀원이 "받은 파일 합치기"로 자기 기록에 합칠 수 있어요. 같은 실험이면 서로의 사진과 측정값이 합쳐져요.</div>`+
+    `<div class="grow"><button class="btn ghost sm" data-a="expFile">${I.doc}실험 파일 만들기</button><button class="btn ghost sm" data-a="impPick">받은 파일 합치기</button></div>`;
+  return out+`<div style="height:20px"></div><div class="bottom"><button class="btn orange" data-a="pdf">${I.pdf}PDF 보고서로 내보내기</button></div>`;
+}
+
+function stepV(){
+  const e=exp(),s=stepOf(),i=e.steps.indexOf(s);
+  return `${topbar(pad2(i+1)+' · '+esc(s.title))}
+  <div class="content">
+   <div class="instr"><div class="label" style="margin-bottom:6px">${esc(s.section)} · 수업 자료</div>${esc(s.detail)}</div>
+   <div class="sect-h" style="padding-bottom:0"><span class="label">사진 ${s.photos.length}장</span><span class="label">모두 PDF에 들어가요</span></div>
+   <div class="grid">
+    ${s.photos.map(p=>`<div class="ph ${p.id===V.newPid?'new':''}"><img src="${p.src}" alt="" data-a="view" data-sid="${s.id}" data-pid="${p.id}">
+      <div class="meta"><b>${esc(p.by)}</b><span class="mono">${fmt(p.at)}</span></div>
+      <input value="${esc(p.memo)}" placeholder="한 줄 메모" data-memo="${p.id}" maxlength="80">
+      <div class="phact"><button class="del ed" data-a="editPh" data-pid="${p.id}">자르기 · 돌리기</button><button class="del" data-a="delPh" data-pid="${p.id}">삭제</button></div></div>`).join('')}
+    <button class="addph" data-a="shootHere">${I.cam}사진 넣기</button>
+   </div>
+   ${measHTML(e,s)}
+   <div class="obs"><div class="label">단계 관찰 메모</div>
+    <textarea data-obs placeholder="예: 용액이 무색 → 연한 노란색으로 변함">${esc(s.obs.text)}</textarea>
+    <div class="by" id="obsby">${s.obs.text?`마지막 작성 · ${esc(s.obs.by)} · ${fmt(s.obs.at)}`:'팀원 누구나 쓸 수 있어요'}</div></div>
+  </div>
+  <div class="bottom">
+   <button class="btn ghost" data-a="prevStep" ${i===0?'disabled style="opacity:.35"':''}>← 이전 단계</button>
+   <button class="btn black" data-a="nextStep" ${i===e.steps.length-1?'disabled style="opacity:.35"':''}>다음 단계 →</button>
+  </div>`;
+}
+
+function editV(){
+  return `${topbar('단계 편집')}
+   <div class="content">
+    <div class="hint">팀원 모두 단계를 고칠 수 있어요. 단계를 지우면 그 단계의 사진도 함께 지워져요.</div>
+    ${editorHTML(V.draft)}
+   </div>
+   <div class="bottom"><button class="btn ghost" data-a="back">취소</button><button class="btn black" data-a="saveSteps">저장</button></div>`;
+}
+
+/* ---------- sheet ---------- */
+function sheet(html){const d=document.createElement('div');d.className='sheet-bg';d.innerHTML=`<div class="sheet">${html}</div>`;d.addEventListener('click',ev=>{if(ev.target===d)d.remove()});document.body.appendChild(d);return d}
+
+/* ---------- images ---------- */
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{res(im)};im.onerror=rej;im.src=u})}
+async function toDataURL(file,max=1600){
+  const im=await loadImg(file);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(im.src);return c.toDataURL('image/jpeg',.82);
+}
+function samplePhoto(){ // 팀원 예시 사진(그림)
+  const c=document.createElement('canvas');c.width=900;c.height=900;const x=c.getContext('2d');
+  x.fillStyle='#EDEBE6';x.fillRect(0,0,900,900);
+  x.strokeStyle='#999';x.lineWidth=2;for(let i=0;i<900;i+=60){x.beginPath();x.moveTo(0,i);x.lineTo(900,i+40);x.stroke()}
+  x.fillStyle='#fff';x.fillRect(330,120,240,70);x.strokeStyle='#222';x.lineWidth=5;x.strokeRect(330,120,240,70);
+  x.fillStyle='rgba(255,255,255,.55)';x.fillRect(320,190,260,520);
+  x.fillStyle='#C2550E';x.fillRect(325,400,250,305);x.fillStyle='#E7C14A';x.fillRect(325,392,250,14);
+  x.strokeRect(320,190,260,520);
+  x.fillStyle='#222';x.font='600 34px "Gowun Dodum", sans-serif';x.fillText('예시 사진',340,800);
+  return c.toDataURL('image/jpeg',.85);
+}
+
+/* ---------- actions ---------- */
+let pending=null; // {sid}
+function openCamera(sid){pending={sid};const c=$('#cam');c.value='';c.click()}
+function openAlbum(sid){pending={sid};const g=$('#gal');g.value='';g.click()}
+// 카메라 아이콘을 누르면: 카메라로 찍을지, 앨범에서 고를지 먼저 물어봄. 고른 뒤에는 전과 같이 그 단계에 바로 붙음
+function pickSource(sid){
+  const e=exp(),st=e?e.steps.find(q=>q.id===sid):null;
+  const tt=$('#toast');if(tt)tt.classList.remove('on'); // 떠 있던 알림이 버튼을 가리지 않게 닫음
+  const d=sheet(`<h3>사진 넣기</h3><p>${st?`${pad2(e.steps.indexOf(st)+1)} · ${esc(st.title)} 단계에 붙어요.`:'이 단계에 붙어요.'}</p><div style="display:flex;flex-direction:column;gap:8px"><button class="btn black" data-x="cam">${I.cam}카메라로 찍기</button><button class="btn ghost" data-x="gal">${I.img}앨범에서 고르기</button><button class="mini" data-x="no" style="align-self:center">취소</button></div>`);
+  d.querySelector('[data-x=cam]').onclick=()=>{d.remove();openCamera(sid)};
+  d.querySelector('[data-x=gal]').onclick=()=>{d.remove();openAlbum(sid)};
+  d.querySelector('[data-x=no]').onclick=()=>d.remove();
+}
+async function addPhotos(files,sid){
+  const e=exp();const s=e.steps.find(x=>x.id===sid);if(!s)return;
+  let last=null;
+  for(const f of files){try{const src=await toDataURL(f);last={id:uid(),src,by:ME,at:Date.now(),memo:''};s.photos.push(last)}catch(err){toast('이 사진은 열 수 없어요')}}
+  if(!last)return;
+  save();
+  if(V.name==='step'&&V.sid===sid){V.newPid=last.id;V.focusNew=true;render()}
+  else go({name:'step',tid:V.tid,eid:V.eid,sid,newPid:last.id,focusNew:true});
+  toast(`<b>${esc(s.title)}</b>에 사진이 붙었어요`);
+}
+
+const A={
+  back,
+  login(){const el=$('#myname'),n=el?el.value.trim():((S.me&&S.me.name)||'');
+    if(!n){if(el)el.focus();return toast('이름을 입력하세요')}
+    S.me=Object.assign({},S.me,{name:n});ME=n;S.loggedIn=true;save();hist.length=0;go({name:'teams'},false);toast(`<b>${esc(n)}</b> 님, 시작할게요`)},
+  // 처음 화면(팀 목록)으로 한 번에 돌아가기
+  home(){hist.length=0;go({name:'teams'},false)},
+  // 첫 화면(이름 적는 화면)으로 나가기. 기록은 그대로 남음
+  logout(){S.loggedIn=false;save();hist.length=0;go({name:'login'},false)},
+  rename(){const d=sheet(`<h3>이름 바꾸기</h3><p>지금까지 내가 남긴 사진·메모의 이름도 함께 바뀌어요.</p><input id="rn" value="${esc(ME)}" autocomplete="name"><button class="btn black" data-x="ok">바꾸기</button>`);
+    const inp=d.querySelector('#rn');setTimeout(()=>inp.focus(),100);
+    d.querySelector('[data-x=ok]').onclick=()=>{const n=inp.value.trim(),old=ME;if(!n){inp.focus();return}
+      S.teams.forEach(t=>t.experiments.forEach(e=>e.steps.forEach(q=>{q.photos.forEach(ph=>{if(ph.by===old)ph.by=n});if(q.obs&&q.obs.by===old)q.obs.by=n;(q.meas||[]).forEach(m=>{if(m.by===old)m.by=n})})));
+      S.me=Object.assign({},S.me,{name:n});ME=n;save();d.remove();render();toast('이름을 바꿨어요')}},
+  reset(){const d=sheet(`<h3>데모를 처음 상태로 돌릴까요?</h3><p>이 폰에 저장된 사진과 메모가 모두 지워져요.</p><div class="row"><button class="btn ghost" data-x="no">취소</button><button class="btn black" data-x="yes">초기화</button></div>`);
+    d.querySelector('[data-x=no]').onclick=()=>d.remove();d.querySelector('[data-x=yes]').onclick=()=>{d.remove();S=defaultState();save();hist.length=0;V={name:'login'};render()}},
+  openTeam(el){go({name:'team',tid:el.dataset.id})},
+  openExp(el){go({name:'exp',tid:V.tid,eid:el.dataset.id,tab:'steps'})}, // 실험 목록에서 실험 다시 열기
+  newTeam(){const d=sheet(`<h3>팀 만들기</h3><p>실험을 묶어 둘 팀을 하나 더 만들어요.</p><input placeholder="예: 무기화학실험 3조" id="tn"><button class="btn black" data-x="ok">만들기</button>`);
+    const inp=d.querySelector('#tn');setTimeout(()=>inp.focus(),100);
+    d.querySelector('[data-x=ok]').onclick=()=>{const n=inp.value.trim();if(!n){inp.focus();return}const t={id:uid(),name:n,course:'',experiments:[]};S.teams.push(t);save();d.remove();go({name:'team',tid:t.id});toast('팀을 만들었어요')}},
+  members(){go({name:'members',tid:V.tid})},
+  addExp(){go({name:'add',tid:V.tid,stage:'pick'})},
+  pickDoc(){const d=$('#doc');d.value='';d.click()},
+  sampleDoc(el){const q=SAMPLES[+(el.dataset.n??3)];startExtract(q.file,q.data)},
+  createExp(){
+    syncEditor(V.draft.steps);
+    const t=team(),dr=V.draft;
+    const e={id:uid(),no:(dr.no||'').trim()||'실험',title:(dr.title||'').trim()||'새 실험',course:dr.course||'',created:Date.now(),report:{goal:dr.goal||'',theory:dr.theory||'',concl:'',disc:''},
+      steps:dr.steps.filter(s=>s.title.trim()).map(s=>({id:uid(),section:s.section,title:s.title,detail:s.detail,photos:[],obs:{text:'',by:'',at:0}}))};
+    // 예시 자료로 만든 실험에만: 수업 자료에 실린 6개 조의 결과를 결과 분석에 미리 넣어 둠
+    e.gap=defaultGap();
+    if(dr.sample){const txt=sampleTable(e);if(txt){const pt=parseTable(txt);gApply(e.gap,pt,guessRoles(pt.header,pt.rows));e.gap.source='table';e.gap.preset=true}}
+    t.experiments.unshift(e);save();
+    hist.length=0;hist.push({name:'teams'});hist.push({name:'team',tid:t.id});
+    V={name:'exp',tid:t.id,eid:e.id,tab:'steps'};render();window.scrollTo(0,0);
+    toast(`<b>${e.steps.length}단계</b>로 실험을 만들었어요`);
+  },
+  tab(el){V.tab=el.dataset.t;render()},
+  shoot(el,ev){if(ev.target.closest('[data-a=openStep]'))return;pickSource(el.dataset.id)},
+  openStep(el){go({name:'step',tid:V.tid,eid:V.eid,sid:el.dataset.id})},
+  shootHere(){pickSource(V.sid)},
+  gallery(){pending={sid:V.sid};const g=$('#gal');g.value='';g.click()},
+  delPh(el){if(!el.classList.contains('arm')){el.classList.add('arm');el.textContent='한 번 더 누르면 삭제';setTimeout(()=>{if(el.isConnected){el.classList.remove('arm');el.textContent='삭제'}},2500);return}
+    const s=stepOf();s.photos=s.photos.filter(p=>p.id!==el.dataset.pid);save();render();toast('사진을 지웠어요')},
+  prevStep(){const e=exp(),i=e.steps.indexOf(stepOf());if(i>0){V={...V,sid:e.steps[i-1].id,newPid:null};render();window.scrollTo(0,0)}},
+  nextStep(){const e=exp(),i=e.steps.indexOf(stepOf());if(i<e.steps.length-1){V={...V,sid:e.steps[i+1].id,newPid:null};render();window.scrollTo(0,0)}},
+  view(el){const s=exp().steps.find(x=>x.id===el.dataset.sid),p=s.photos.find(x=>x.id===el.dataset.pid);
+    const d=document.createElement('div');d.className='viewer';d.innerHTML=`<div class="vb"><span><b>${esc(s.title)}</b> · ${esc(p.by)} · ${fmt(p.at)}</span><span><button data-v="edit">자르기</button><button>닫기 ✕</button></span></div><img src="${p.src}" alt=""><div class="vb">${esc(p.memo||'')}</div>`;d.onclick=ev=>{d.remove();if(ev.target.dataset.v==='edit')cropOpen(s,p)};document.body.appendChild(d)},
+  editPh(el){const s=stepOf(),p=s.photos.find(x=>x.id===el.dataset.pid);if(p)cropOpen(s,p)},
+  editSteps(){const e=exp();go({name:'edit',tid:V.tid,eid:V.eid,draft:e.steps.map(s=>({...s,photos:s.photos.slice()}))})},
+  saveSteps(){syncEditor(V.draft);const e=exp();e.steps=V.draft.filter(s=>s.title.trim()).map(s=>s.id?s:{...s,id:uid(),photos:[],obs:{text:'',by:'',at:0}});save();back();toast('단계를 저장했어요 · 팀 전체에 반영돼요')},
+  up(el){const L=curDraft();syncEditor(L);const i=+el.dataset.i;[L[i-1],L[i]]=[L[i],L[i-1]];if(L[i].section!==L[i-1].section){const t=L[i].section;L[i].section=L[i-1].section;L[i-1].section=t}render()},
+  down(el){const L=curDraft();syncEditor(L);const i=+el.dataset.i;[L[i+1],L[i]]=[L[i],L[i+1]];if(L[i].section!==L[i+1].section){const t=L[i].section;L[i].section=L[i+1].section;L[i+1].section=t}render()},
+  rm(el){const L=curDraft();syncEditor(L);const i=+el.dataset.i;const s=L[i];
+    if(s.photos&&s.photos.length&&!el.dataset.ok){el.dataset.ok=1;el.textContent='?';toast(`사진 ${s.photos.length}장이 있어요 · 한 번 더 누르면 삭제`);return}
+    L.splice(i,1);render()},
+  addStep(){const L=curDraft();syncEditor(L);L.push({section:L.length?L[L.length-1].section:'과정',title:'',detail:'',photos:[]});render();const ins=document.querySelectorAll('.ed input[data-k=title]');ins[ins.length-1]?.focus()},
+  async pdf(el){await makePDF(el)}
+};
+const curDraft=()=>V.name==='add'?V.draft.steps:V.draft;
+function syncEditor(L){
+  document.querySelectorAll('.ed [data-k]').forEach(n=>{const s=L[+n.dataset.i];if(s)s[n.dataset.k]=n.value});
+  document.querySelectorAll('.ed-sec input').forEach(n=>{const old=n.dataset.sec,nv=n.value.trim()||old;L.forEach(s=>{if(s.section===old)s.section=nv})});
+}
+function startExtract(name,src=EXTRACT){
+  V.stage='extracting';V.file=name;render();
+  setTimeout(()=>{if(V.name!=='add')return;V.stage='review';V.draft={...src,sample:true,steps:src.steps.map(([section,title,detail])=>({section,title,detail}))};render();window.scrollTo(0,0)},1600);
+}
+
+// 예시 자료 목록 (무기화학실험 실험 1~4)
+const SAMPLES=[{file:'실험1_Cucurbit[6]uril의 합성 및 금속 이온과의 반응.pdf',data:EXTRACT1},{file:'실험2_헤모글로빈 모델 화합물의 합성.pdf',data:EXTRACT2},{file:'실험3_코발트 착물의 입체 화학.pdf',data:EXTRACT3},{file:'실험4_MOF-5 합성 및 분석.pdf',data:EXTRACT}];
+
+/* ============================================================
+   결과 분석 (갭맵 이식)
+   실험마다 e.gap 에 저장: 조건 열, 결과 열, 실험 기록(rows), 계획, 선행연구, 목적·가설
+   규칙 기반으로만 계산하고, 데이터는 다른 기록과 같이 이 폰 안에만 저장한다.
+   ============================================================ */
+const SEP='\u0001';
+const defaultGap=()=>({conds:[],results:[],repLabel:'',rows:[],plans:[],refs:[],goal:'',curRes:null,better:'high'});
+const G=()=>{const e=exp();if(!e.gap)e.gap=defaultGap();return e.gap};
+
+/* --- 예시 표: 수업 자료의 6개 조 그래프에서 읽은 값 --- */
+function sampleTable(e){
+  if(e.no==='실험 1')return null; // 수업 자료에 여러 조의 결과가 없음
+  if(e.no==='실험 2'){ // IR 스펙트럼에 적힌 피크 위치 (Co(salen)의 O–H는 표시가 없어 비워 둠)
+    const L=['이름\t조\t화합물\tC=N (cm⁻¹)\tC–O (cm⁻¹)\tO–H (cm⁻¹)'],a=[[1634,1150,3433],[1637,1150,3440],[1637,1149,3440],[1633,1149,3444],[1632,1150,3436],[1636,1149,3433]],b=[[1629,1142],[1628,1141],[1628,1141],[1627,1141],[1627,1141],[1625,1141]];
+    a.forEach((v,i)=>{L.push(`H₂salen-${i+1}\t${i+1}\tH₂salen\t${v[0]}\t${v[1]}\t${v[2]}`);L.push(`Co(salen)-${i+1}\t${i+1}\tCo(salen)\t${b[i][0]}\t${b[i][1]}\t`)});
+    return L.join('\n');
+  }
+  if(e.no==='실험 3'){ // UV-vis 그래프에 적힌 λmax
+    const b1=[[511,512,519,522,522],[511,512,520,521,523],[510,511,521,524,522],[511,512,519,521,522],[511,512,521,522,522],[510,512,519,521,523]];
+    const b2=[[611,613,614],[611,614,615],[611,612,615],[611,614,615],[612,614,615],[612,614,615]];
+    const sol=[['①','0.3','0'],['②','0.1','0'],['③','0.1','5'],['④','0.1','10'],['⑤','0.1','15']];
+    const L=['이름\t조\tCo 원액 (M)\t3 M KSCN (mL)\t첫째 흡수띠 λmax (nm)\t둘째 흡수띠 λmax (nm)'];
+    b1.forEach((r,g)=>sol.forEach((x,i)=>L.push([`${g+1}조-${x[0]}`,g+1,x[1],x[2],r[i],i<2?'없음':b2[g][i-2]].join('\t'))));
+    return L.join('\n');
+  }
+  // PXRD 그래프에서 잰 9.7° 피크 / 6.9° 피크 높이 비
+  const a=[40.9,69.4,49.9,24.5,198.5,25.2],w=[37.0,51.8,31.5,6.6,28.5,26.0];
+  const L=['이름\t조\t세척\tI(9.7°)/I(6.9°) (%)'];
+  a.forEach((v,i)=>{L.push(`assyn-${i+1}\t${i+1}\t전\t${v.toFixed(1)}`);L.push(`wash-${i+1}\t${i+1}\t후\t${w[i].toFixed(1)}`)});
+  return L.join('\n');
+}
+
+/* --- 표 읽기 --- */
+function splitCSV(line){const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else if(ch==='"')q=true;else if(ch===','){out.push(cur);cur=''}else cur+=ch}
+  out.push(cur);return out}
+function parseTable(text){ // 탭(엑셀) / 세로선(마크다운) / 쉼표(CSV)
+  let lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.some(l=>l.includes('\t'))){const md=lines.filter(l=>(l.match(/\|/g)||[]).length>=2);if(md.length>=2)lines=md} // AI의 답처럼 표 앞뒤에 글이 있으면 표 줄만 남김
+  if(lines.length<2)return null;
+  const split=lines[0].includes('\t')?l=>l.split('\t'):lines[0].includes('|')?l=>l.trim().replace(/^\||\|$/g,'').split('|'):splitCSV;
+  const rows=lines.filter(l=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(l)).map(l=>split(l).map(c=>c.trim().replace(/^\*\*(.*)\*\*$/,'$1').replace(/^`(.*)`$/,'$1')));
+  return {header:rows[0],rows:rows.slice(1)};
+}
+const NONE_RE=/^(–|—|-|없음|x|n\.?d\.?|none)$/i;
+function parseCell(s){ // 숫자 / 없음(측정했지만 없음) / 빈칸(측정 안 함)
+  s=(s??'').trim();if(s==='')return {v:null,miss:'blank'};if(NONE_RE.test(s))return {v:null,miss:'none'};
+  const n=Number(s.replace(/,/g,''));if(isNaN(n))return {v:null,miss:'blank',bad:true};
+  return {v:n,dp:(s.split('.')[1]||'').length};
+}
+const RESULT_RE=/수율|수득|yield|λ|흡광|absorb|ε|세기|intensity|결과|result|비율|ratio|피크|peak|\bnm\b|cm⁻¹|cm-1/i;
+const ROLE={name:'이름',cond:'조건',result:'결과',rep:'반복 번호',note:'메모',skip:'무시'};
+function guessRoles(h,rows){ // 열 역할 자동 추정 (화면에서 고칠 수 있음)
+  const isNum=x=>x!==''&&!isNaN(Number(x.replace(/,/g,'')));let nameSet=false,repSet=false;
+  return h.map((label,i)=>{
+    const v=rows.map(r=>(r[i]??'').trim()).filter(x=>x!==''&&!NONE_RE.test(x));const uniq=new Set(v).size,num=v.length>0&&v.every(isNum);
+    if(/메모|비고|note|comment/i.test(label))return 'note';
+    if(!repSet&&/^(조|반복( 번호)?|회차|run|trial|rep(licate)?)$/i.test(label.trim())){repSet=true;return 'rep'}
+    if(!nameSet&&!num&&uniq===rows.length&&(i===0||/이름|name|시료|sample/i.test(label))){nameSet=true;return 'name'}
+    if(num&&(RESULT_RE.test(label)||i===h.length-1))return 'result';
+    return 'cond';
+  });
+}
+
+/* --- 계산 --- */
+const gMean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const gMed=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+const gKey=(g,x)=>g.conds.map(c=>x.cond[c.key]).join(SEP);
+const gRes=g=>g.results.find(r=>r.key===g.curRes)||g.results[0];
+function gVals(g,c){ // 기록된 값 + 직접 추가한 값. 숫자는 크기순, 글자는 처음 나온 순서
+  const v=[...new Set(g.rows.map(e=>e.cond[c.key]).concat(c.extra||[]))];
+  return v.every(x=>x!==''&&!isNaN(x))?v.sort((a,b)=>a-b):v;
+}
+const gAddExtra=(g,c,v)=>{if(!gVals(g,c).includes(v))c.extra=(c.extra||[]).concat(v)};
+function gGroups(g){const m=new Map();g.rows.forEach(e=>{const k=gKey(g,e);if(!m.has(k))m.set(k,[]);m.get(k).push(e)});return m}
+function gStat(list,r){
+  const x=list.map(e=>e.res[r.key]).filter(v=>v!=null);const o={n:x.length,none:list.filter(e=>e.miss&&e.miss[r.key]==='none').length};
+  if(x.length)o.mean=gMean(x);if(x.length>1)o.sd=Math.sqrt(x.reduce((a,v)=>a+(v-o.mean)**2,0)/(x.length-1));return o;
+}
+const gTotal=g=>g.conds.reduce((n,c)=>n*gVals(g,c).length,1);
+function gFlags(g,r){ // 확인이 필요한 값: ① 같은 조건 4회 이상에서 수정 z-점수 > 3.5 ② 100 %를 넘는 수득률
+  const f=new Map();
+  if(g.conds.length)gGroups(g).forEach(list=>{const xs=list.filter(e=>e.res[r.key]!=null);if(xs.length<4)return;
+    const v=xs.map(e=>e.res[r.key]),med=gMed(v),mad=gMed(v.map(x=>Math.abs(x-med)));
+    if(mad>0)xs.forEach(e=>{if(.6745*Math.abs(e.res[r.key]-med)/mad>3.5)f.set(e.id,'같은 조건의 다른 값들과 크게 달라요')})});
+  if(r.isYield)g.rows.forEach(e=>{if(e.res[r.key]>100)f.set(e.id,'100 %를 넘는 값이에요')});
+  return f;
+}
+function gEffects(g,r){ // 조건 하나만 다른 묶음끼리 비교
+  const gs=[...gGroups(g).values()].map(list=>({vals:list[0].cond,list}));
+  const repM=list=>{const m=new Map();list.forEach(e=>{if(e.rep&&e.res[r.key]!=null){if(!m.has(e.rep))m.set(e.rep,[]);m.get(e.rep).push(e.res[r.key])}});m.forEach((v,k)=>m.set(k,gMean(v)));return m};
+  const out=[];
+  for(let i=0;i<gs.length;i++)for(let j=i+1;j<gs.length;j++){
+    const d=g.conds.filter(c=>gs[i].vals[c.key]!==gs[j].vals[c.key]);if(d.length!==1)continue;
+    const c=d[0],ord=gVals(g,c);let a=gs[i],b=gs[j];if(ord.indexOf(a.vals[c.key])>ord.indexOf(b.vals[c.key]))[a,b]=[b,a];
+    const sa=gStat(a.list,r),sb=gStat(b.list,r);if(!sa.n||!sb.n)continue;
+    const ra=repM(a.list),rb=repM(b.list),com=[...ra.keys()].filter(k=>rb.has(k));let paired=null;
+    if(com.length>1){const df=com.map(k=>rb.get(k)-ra.get(k));paired={n:df.length,up:df.filter(x=>x>0).length,down:df.filter(x=>x<0).length}}
+    out.push({cond:c,from:a.vals[c.key],to:b.vals[c.key],delta:sb.mean-sa.mean,meanA:sa.mean,meanB:sb.mean,sdA:sa.sd,sdB:sb.sd,nA:sa.n,nB:sb.n,paired,
+      others:g.conds.filter(x=>x!==c).map(x=>`${x.label} ${a.vals[x.key]}`).join(', '),
+      so:[g.conds.indexOf(c),ord.indexOf(a.vals[c.key]),ord.indexOf(b.vals[c.key])]});
+  }
+  return out.sort((p,q)=>p.so[0]-q.so[0]||p.others.localeCompare(q.others,'ko')||p.so[1]-q.so[1]||p.so[2]-q.so[2]);
+}
+function gRank(g,r){ // 미실행 조합 순위: 조건 하나만 한 단계 다른 이웃 칸들의 평균이 좋은 순서
+  const none={ranked:[],byKey:new Map()};if(!g.conds.length||gTotal(g)>3000)return none;
+  const gm=gGroups(g),lists=g.conds.map(c=>gVals(g,c)),gaps=[];
+  (function walk(d,cur){
+    if(d===g.conds.length){const key=cur.join(SEP);if(gm.has(key))return;const nb=[];
+      g.conds.forEach((c,ci)=>{const p=lists[ci].indexOf(cur[ci]);[-1,1].forEach(st=>{const v=lists[ci][p+st];if(v===undefined)return;
+        const q=gm.get(cur.map((x,xi)=>xi===ci?v:x).join(SEP));if(q){const s=gStat(q,r);if(s.n)nb.push(s.mean)}})});
+      gaps.push({key,vals:cur.slice(),score:nb.length?gMean(nb):null});return}
+    lists[d].forEach(v=>{cur[d]=v;walk(d+1,cur)});
+  })(0,[]);
+  const ranked=gaps.filter(x=>x.score!==null).sort((p,q)=>g.better==='high'?q.score-p.score:p.score-q.score);
+  ranked.forEach((x,i)=>x.rank=i+1);return {ranked,byKey:new Map(gaps.map(x=>[x.key,x]))};
+}
+
+/* --- 요약 · 분류 · 그래프 --- */
+// 보고서 글: 예전에 만든 실험에는 report가 없으므로 처음 열 때 만들어 줌
+const RP=()=>{const e=exp();if(!e.report){const src=SAMPLES.map(q=>q.data).find(x=>x.no===e.no&&x.title===e.title);e.report={goal:src?src.goal:'',theory:src?src.theory:'',concl:'',disc:''}}return e.report};
+function gSummary(g,r){ // 조건 조합별 요약, 조건 값 순서대로
+  const ord=g.conds.map(c=>gVals(g,c));
+  return [...gGroups(g).values()].map(list=>{const xs=list.filter(e=>e.res[r.key]!=null),v=xs.map(e=>e.res[r.key]);
+    return {list,vals:g.conds.map(c=>list[0].cond[c.key]),st:gStat(list,r),min:v.length?Math.min(...v):null,max:v.length?Math.max(...v):null,pts:xs.map(e=>({v:e.res[r.key],id:e.id}))}})
+   .sort((a,b)=>{for(let i=0;i<ord.length;i++){const d=ord[i].indexOf(a.vals[i])-ord[i].indexOf(b.vals[i]);if(d)return d}return 0});
+}
+// 분류: 평균 차이를 두 묶음의 표준편차와 비교
+const gVerdict=x=>{if(x.sdA==null&&x.sdB==null)return '반복 없음';return Math.abs(x.delta)<=Math.max(x.sdA||0,x.sdB||0)?'편차 범위 안':x.delta>0?'증가':'감소'};
+const gCV=st=>st.sd!=null&&st.mean?Math.abs(st.sd/st.mean)*100:null;
+function gChart(g,r){ // 그래프에 필요한 값: 묶음, 세로축 범위와 눈금
+  const rows=gSummary(g,r).filter(x=>x.st.n);if(!rows.length)return null;
+  let lo=Infinity,hi=-Infinity;rows.forEach(x=>{const s=x.st.sd||0;lo=Math.min(lo,x.min,x.st.mean-s);hi=Math.max(hi,x.max,x.st.mean+s)});
+  if(lo===hi){lo-=1;hi+=1}
+  const raw=(hi-lo)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(k=>k*p).find(v=>v>=raw*.999);
+  const y0=Math.floor(lo/step+1e-9)*step,y1=Math.ceil(hi/step-1e-9)*step,ticks=[];for(let t=y0;t<=y1+step/1e6;t+=step)ticks.push(+t.toFixed(10));
+  return {rows,y0,y1,ticks,flags:gFlags(g,r),dp:Math.max(0,-Math.floor(Math.log10(step)+1e-9))};
+}
+// 글자 폭 어림(한글 10, 그 외 5.6)과 두 줄 나누기
+const gTw=t=>[...String(t)].reduce((a,ch)=>a+(ch.charCodeAt(0)>0x2E80?10:5.6),0);
+function gLab2(t,w){
+  if(gTw(t)<=w)return [t,''];
+  const cutTo=(q,lim)=>{let o='';for(const ch of q){if(gTw(o+ch+'…')>lim)return o+'…';o+=ch}return o};
+  const tok=t.split(' ');let a='',i=0;
+  while(i<tok.length&&gTw((a?a+' ':'')+tok[i])<=w){a=(a?a+' ':'')+tok[i];i++}
+  if(!a)return [cutTo(t,w),''];
+  const b=tok.slice(i).join(' ');return [a,gTw(b)<=w?b:cutTo(b,w)];
+}
+function gChartSVG(g,r){ // 점 = 측정값, 주황 선 = 평균, 세로 막대 = 평균 ± 표준편차
+  const m=gChart(g,r);if(!m)return '';
+  const long=m.rows.some(q=>gTw(q.vals.join(' · '))>44);
+  const n=m.rows.length,L=50,T=12,B=long?58:46,H=long?262:250,gw=Math.max(long?62:46,Math.min(92,(326-L-8)/n)),W=Math.round(L+n*gw+8),ph=H-T-B,Y=v=>+(T+ph*(1-(v-m.y0)/(m.y1-m.y0))).toFixed(1);
+  let o=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(r.label)} 조건별 그래프" style="display:block;font-family:var(--mono)">`;
+  m.ticks.forEach(t=>{o+=`<line x1="${L}" x2="${W-4}" y1="${Y(t)}" y2="${Y(t)}" stroke="#E7E9F1"/><text x="${L-6}" y="${Y(t)+4}" font-size="10" text-anchor="end" fill="#687083">${t.toFixed(m.dp)}</text>`});
+  o+=`<line x1="${L}" x2="${L}" y1="${T}" y2="${T+ph}" stroke="#252B3B"/><line x1="${L}" x2="${W-4}" y1="${T+ph}" y2="${T+ph}" stroke="#252B3B"/>`;
+  m.rows.forEach((q,i)=>{const cx=+(L+gw*(i+.5)).toFixed(1),k=q.pts.length;
+    o+=`<line x1="${cx-13}" x2="${cx+13}" y1="${Y(q.st.mean)}" y2="${Y(q.st.mean)}" stroke="#5266E0" stroke-width="3"/>`;
+    if(q.st.sd!=null){const a=Y(q.st.mean+q.st.sd),b=Y(q.st.mean-q.st.sd);o+=`<path d="M${cx} ${a}V${b}M${cx-5} ${a}h10M${cx-5} ${b}h10" stroke="#252B3B" fill="none"/>`}
+    q.pts.forEach((pt,j)=>{const dx=Math.max(-17,Math.min(17,(j-(k-1)/2)*7)),bad=m.flags.has(pt.id);o+=`<circle cx="${cx+dx}" cy="${Y(pt.v)}" r="3.5" fill="${bad?'#C2504A':'#fff'}" stroke="${bad?'#C2504A':'#252B3B'}" stroke-width="1.5"/>`});
+    const [l1,l2]=gLab2(q.vals.join(' · ')||'전체',gw-4);
+    o+=`<text x="${cx}" y="${T+ph+15}" font-size="10" text-anchor="middle" fill="#252B3B" style="font-family:var(--sans)">${esc(l1)}${l2?`<tspan x="${cx}" dy="12">${esc(l2)}</tspan>`:''}</text>`});
+  return o+`<text x="${L+(W-L)/2}" y="${H-10}" font-size="10" text-anchor="middle" fill="#687083" style="font-family:var(--sans)">${esc(g.conds.map(c=>c.label).join(' · '))}</text></svg>`;
+}
+function gSumBody(g,r){ // 그래프 + 조건별 요약표 + 조건별 영향 분류 (그래프 탭과 결과 모아보기에서 같이 씀)
+  const rows=gSummary(g,r),svg=gChartSVG(g,r),eff=gEffects(g,r),anyP=eff.some(x=>x.paired),anyO=g.conds.length>1;
+  let o=`<div class="gh">${esc(r.label)}</div><div class="gnote">점: 측정값 하나 · 주황 선: 평균 · 세로 막대: 평균 ± 표준편차 · 빨간 점: 확인이 필요한 값</div>`+
+    (svg?`<div class="gscroll" style="padding:12px 0 2px">${svg}</div>`:`<div class="gnote">숫자로 된 결과가 없어요.</div>`)+
+    `<div class="gh">조건별 요약</div><div class="gscroll"><table class="gt"><thead><tr>${g.conds.length?g.conds.map(c=>`<th>${esc(c.label)}</th>`).join(''):'<th>조건</th>'}<th>횟수</th><th>평균</th><th>표준편차</th><th>CV %</th><th>최소 – 최대</th></tr></thead><tbody>`+
+    rows.map(x=>{const cv=gCV(x.st);return `<tr>${(g.conds.length?x.vals:['전체']).map(v=>`<td>${esc(v)}</td>`).join('')}<td>${x.st.n}${x.st.none?` · 없음 ${x.st.none}`:''}</td><td>${x.st.n?(x.st.n>1?fm(x.st.mean,r):fv(x.st.mean,r)):''}</td><td>${x.st.sd!=null?fm(x.st.sd,r):''}</td><td>${cv!=null?cv.toFixed(1):''}</td><td>${x.st.n?fv(x.min,r)+' – '+fv(x.max,r):''}</td></tr>`}).join('')+`</tbody></table></div>`;
+  if(eff.length)o+=`<div class="gh">조건을 바꿨을 때의 분류</div><div class="gnote">평균 차이가 두 묶음의 표준편차보다 크면 "증가"·"감소", 작으면 "편차 범위 안"으로 나눠요.</div><div class="gscroll"><table class="gt"><thead><tr><th>바꾼 조건</th><th>값</th>${anyO?'<th>나머지 조건</th>':''}<th>평균</th><th>분류</th>${anyP?`<th>같은 ${esc(g.repLabel||'반복')}끼리</th>`:''}</tr></thead><tbody>`+
+    eff.slice(0,30).map(x=>{const v=gVerdict(x);return `<tr><td>${esc(x.cond.label)}</td><td>${esc(x.from)} → ${esc(x.to)}</td>${anyO?`<td>${esc(x.others)}</td>`:''}<td>${fm(x.meanA,r)} → ${fm(x.meanB,r)}</td><td>${v==='증가'?'<span class="tag o">▲ 증가</span>':v==='감소'?'<span class="tag" style="background:var(--ink);color:#fff">▼ 감소</span>':`<span class="tag g">${v}</span>`}</td>${anyP?`<td>${x.paired?`${x.paired.n}쌍 중 증가 ${x.paired.up} · 감소 ${x.paired.down}`:''}</td>`:''}</tr>`}).join('')+`</tbody></table></div>`;
+  return o;
+}
+function gSum(g){
+  if(!g.rows.length)return `<div class="empty"><div class="big">${I.doc}</div>단계에서 측정값을 적거나 "데이터"에서 표를 넣으면 그래프와 요약표가 나와요.</div>`;
+  return gSumBody(g,gRes(g))+`<div class="gnote">"결과 모아보기"의 PDF에 결과 열마다 이 그래프와 표가 들어가요.</div>`;
+}
+// 결론·고찰에 넣을 문장: 표에서 계산한 사실만 (해석은 넣지 않음)
+function gAuto(g,kind){
+  const L=[];
+  g.results.forEach(r=>{
+    if(kind==='concl'){ // 조건마다, 나머지 조건이 같은 묶음에서 가장 멀리 떨어진 두 값을 비교
+      if(g.bySample&&g.rows.length>2){const ex=gExtremes(g,r);if(ex)L.push(`${r.label}: 가장 큰 값은 ${ex.max.name}(${fv(ex.max.res[r.key],r)}), 가장 작은 값은 ${ex.min.name}(${fv(ex.min.res[r.key],r)})였다.`)}
+      else{gKeyEffects(g,r).forEach(x=>L.push(gLine(g,r,x)));gTied(g,r).forEach(x=>L.push(gTiedLine(g,r,x)))}
+    }else{
+      const fl=gFlags(g,r),gm=gGroups(g);
+      g.rows.forEach(e=>{if(!fl.has(e.id))return;const v=e.res[r.key];
+        if(r.isYield&&v>100)L.push(`확인 필요: ${e.name}의 ${r.label} = ${fv(v,r)} (100 %를 넘음).`);
+        else{const med=gMed(gm.get(gKey(g,e)).map(q=>q.res[r.key]).filter(q=>q!=null));L.push(`확인 필요: ${e.name}의 ${r.label} = ${fv(v,r)} (같은 조건의 중앙값 ${fm(med,r)}와 크게 다름).`)}});
+      const rep=gSummary(g,r).filter(x=>x.st.n>=3&&gCV(x.st)!=null).sort((a,b)=>gCV(b.st)-gCV(a.st))[0];
+      if(rep)L.push(`${r.label}의 반복 측정 편차가 가장 큰 조건: ${g.conds.map((c,i)=>`${c.label} ${rep.vals[i]}`).join(', ')} (표준편차 ${fm(rep.st.sd,r)}, CV ${gCV(rep.st).toFixed(1)} %, ${rep.st.n}회).`);
+      const none=g.rows.filter(e=>e.miss&&e.miss[r.key]==='none').length;if(none)L.push(`${r.label}: "없음"으로 기록된 측정 ${none}건.`);
+    }
+  });
+  if(kind==='disc'&&g.conds.length&&!g.bySample){const rk=gRank(g,gRes(g)),gaps=[...rk.byKey.values()];
+    if(gaps.length)L.push(`실행하지 않은 조건 조합 ${gaps.length}개 (전체 ${gTotal(g)}개): `+gaps.slice(0,5).map(q=>g.conds.map((c,i)=>`${c.label} ${q.vals[i]}`).join(' · ')).join(' / ')+(gaps.length>5?' 등':'')+'.')}
+  return L;
+}
+
+/* --- 단계에서 적은 측정값 → 결과 분석 표 --- */
+const UNITS=['mg','kg','g','μL','mL','L','mM','M','mmol','mol','nm','cm⁻¹','°C','℃','%','rpm','분','시간','h','min'];
+const mKey=m=>m.label+(m.unit?` (${m.unit})`:'');
+const allMeas=e=>{const a=[];e.steps.forEach(s=>(s.meas||[]).forEach(m=>a.push(m)));return a};
+function measSets(e){ // 시료나 항목이 하나라도 겹치는 단계끼리 묶음 → [[단계,…],…]
+  const st=e.steps.filter(q=>(q.meas||[]).some(m=>m.sample)).map(q=>{const ms=q.meas.filter(m=>m.sample);return {s:q,sm:new Set(ms.map(m=>m.sample)),ck:new Set(ms.map(mKey))}});
+  const par=st.map((_,i)=>i),find=i=>par[i]===i?i:(par[i]=find(par[i]));
+  for(let i=0;i<st.length;i++)for(let j=i+1;j<st.length;j++)if([...st[i].sm].some(v=>st[j].sm.has(v))||[...st[i].ck].some(v=>st[j].ck.has(v)))par[find(i)]=find(j);
+  const gr=new Map();st.forEach((q,i)=>{const k=find(i);if(!gr.has(k))gr.set(k,[]);gr.get(k).push(q.s)});
+  return [...gr.values()];
+}
+function measTable(e,steps){ // 줄 = 시료, 열 = 측정 이름. 같은 시료·이름이 여러 번이면 마지막 값
+  const all=(steps?steps.flatMap(q=>q.meas||[]):allMeas(e)).filter(m=>m.sample);if(!all.length)return null; // 시료 이름이 있는 것만
+  const samples=[...new Set(all.map(m=>m.sample))],cols=[...new Set(all.map(mKey))];
+  return {header:['시료'].concat(cols),count:all.length,rows:samples.map(sm=>[sm].concat(cols.map(c=>{const hit=all.filter(m=>m.sample===sm&&mKey(m)===c).pop();return hit?hit.value:''})))};
+}
+function measMini(s){ // 한 단계의 측정값을 표로: 줄 = 시료(없으면 "공통"), 열 = 측정 이름
+  const cols=[...new Set(s.meas.map(mKey))],names=[...new Set(s.meas.map(m=>m.sample||'공통'))];
+  return {head:['시료'].concat(cols),rows:names.map(n=>[n].concat(cols.map(c=>{const hit=s.meas.filter(m=>(m.sample||'공통')===n&&mKey(m)===c).pop();return hit?hit.value:''})))};
+}
+function mSuggest(s){ // 사진 메모·관찰 메모에서 "이름 숫자 단위"를 찾음 (규칙 기반, 제안만 함)
+  const have=new Set((s.meas||[]).map(m=>m.label+'|'+m.value+'|'+m.unit)),out=[];
+  const re=new RegExp('((?:[A-Za-z][A-Za-z-]*\\s+){0,2}\\S+)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*('+[...UNITS].sort((a,b)=>b.length-a.length).join('|')+')(?![A-Za-z])','g');
+  s.photos.map(p=>p.memo).concat([s.obs.text]).filter(Boolean).forEach(t=>{let m;while((m=re.exec(t))){const label=m[1].replace(/[,:;]$/,'');if(!/[A-Za-z가-힣]/.test(label))continue; // "= 4.500 g"처럼 이름이 없는 것은 건너뜀
+    const k=label+'|'+m[2]+'|'+m[3];if(!have.has(k)){have.add(k);out.push({label,value:m[2],unit:m[3]})}}});
+  return out.slice(0,6);
+}
+// 제안 버튼 부분만 따로 그림 (메모를 고친 뒤 화면 전체를 다시 그리지 않고 이 부분만 바꿈)
+function mSugHTML(s){const sug=mSuggest(s);V.msug=sug;
+  return sug.length?`<div class="by" style="margin-top:12px">메모에서 찾은 숫자 · 누르면 "공통" 줄에 들어가요</div><div class="chips" style="padding:6px 0 0">${sug.map((q,i)=>`<button class="chip" data-a="mPick" data-i="${i}" style="padding:5px 9px">${esc(q.label)} ${esc(q.value)} ${esc(q.unit)}</button>`).join('')}</div>`:''}
+// 한 단계의 표 구조를 보관: s.mcols = 항목(열), s.mrows = 시료(줄). 값은 s.meas에 납작하게 저장
+function mEnsure(s){
+  s.meas=s.meas||[];s.mcols=s.mcols||[];s.mrows=s.mrows||[];
+  s.meas.forEach(m=>{if(!s.mcols.some(c=>mKey(c)===mKey(m)))s.mcols.push({label:m.label,unit:m.unit});if(m.sample&&!s.mrows.includes(m.sample))s.mrows.push(m.sample)});
+}
+const mGet=(s,sample,c,key)=>{const k=key||mKey(c),hit=(s.meas||[]).filter(m=>m.sample===sample&&mKey(m)===k).pop();return hit?hit.value:''};
+function mSet(s,sample,c,value){s.meas=(s.meas||[]).filter(m=>!(m.sample===sample&&mKey(m)===mKey(c)));if(value!=='')s.meas.push({id:uid(),sample,label:c.label,unit:c.unit,value,by:ME,at:Date.now()})}
+// 계산 항목(예: 수득률 = 실제 ÷ 이론 × 100)을 다시 계산. 바뀐 칸 [줄, 열, 값]을 돌려줌
+function mRecalc(s,e){
+  e=e||exp();const out=[],rows=[''].concat(s.mrows),toNum=v=>{const n=Number(String(v).replace(/,/g,''));return v===''||isNaN(n)?null:n};
+  // 이 단계 → 다른 단계 순서로 값을 찾음
+  const look=(r,key)=>{let v=mGet(s,r,{label:key,unit:''},key);if(v!=='')return toNum(v);for(const q of e.steps){if(q===s)continue;const hit=(q.meas||[]).filter(m=>m.sample===r&&mKey(m)===key).pop();if(hit)return toNum(hit.value)}return null};
+  s.mcols.forEach((c,j)=>{if(!c.calc)return;
+    rows.forEach((r,i)=>{let a=look(r,c.calc.a),b=look(r,c.calc.b),v='';
+      if(r!==''&&(a!==null||b!==null)){if(a===null)a=look('',c.calc.a);if(b===null)b=look('',c.calc.b)} // 시료 줄에 없는 값은 공통 줄에서 가져옴
+      if(a!==null&&b!==null){const q=({'÷':a/b,'×':a*b,'−':a-b,'+':a+b})[c.calc.op]*(c.calc.k||1);if(isFinite(q))v=String(Number(q.toPrecision(4)))}
+      if(mGet(s,r,c)!==v){mSet(s,r,c,v);out.push([i,j,v])}})});
+  return out;
+}
+// "이론 수득량"과 "실제 수득량"이 있고 수득률이 아직 없으면 [실제, 이론] 항목을 돌려줌
+function mYieldPair(s){const c=(s.mcols||[]).filter(q=>!q.calc),a=c.find(q=>/실제|얻은/.test(q.label)),b=c.find(q=>/이론/.test(q.label));
+  return a&&b&&!(s.mcols||[]).some(q=>/수득률|수율/.test(q.label))?[a,b]:null}
+function measHTML(e,s){
+  mEnsure(s);mRecalc(s,e);
+  const cols=s.mcols,rows=[''].concat(s.mrows);
+  const known=[...new Set(e.steps.flatMap(q=>(q.mrows||[]).concat((q.meas||[]).map(m=>m.sample))))].filter(Boolean),others=known.filter(n=>!s.mrows.includes(n));
+  const labels=[...new Set(e.steps.flatMap(q=>(q.mcols||[]).map(c=>c.label)))];
+  const dl=(id,list)=>`<datalist id="${id}">${list.map(v=>`<option value="${esc(v)}">`).join('')}</datalist>`;
+  let out=`<div class="obs" style="padding-bottom:8px"><div class="label" id="mcount">측정값 ${s.meas.length}개</div>`;
+  if(cols.length){
+    out+=`<div class="gscroll mg" style="margin:10px -18px 0;border-left:0;border-right:0"><table class="gt"><thead><tr><th>시료</th>${cols.map((c,j)=>`<th>${esc(c.label)}<small>${c.calc?'계산':esc(c.unit||' ')}</small><button class="x" data-a="mColDel" data-j="${j}" aria-label="${esc(c.label)} 항목 삭제">×</button></th>`).join('')}</tr></thead><tbody>`+
+      rows.map((r,i)=>`<tr><td>${i===0?'<span class="tag g">공통</span>':`<input class="mn" data-mr="${i-1}" value="${esc(r)}" aria-label="시료 이름"><button class="x rowx" data-a="mRowDel" data-i="${i-1}" aria-label="${esc(r)} 줄 삭제">×</button>`}</td>`+
+        cols.map((c,j)=>`<td><input class="mv" data-mc="${i}|${j}" value="${esc(mGet(s,r,c))}" ${c.calc?'readonly tabindex="-1"':'inputmode="decimal"'} aria-label="${esc(r||'공통')} ${esc(c.label)}"></td>`).join('')+`</tr>`).join('')+
+      `<tr><td><input class="mn" data-mr="new" placeholder="+ 시료 이름" list="ml-s" aria-label="새 시료 이름">${dl('ml-s',others)}</td>${cols.map(()=>'<td></td>').join('')}</tr></tbody></table></div>`+
+      `<div class="by" style="margin-top:8px">칸을 눌러 바로 적어요. "공통" 줄은 시약 무게처럼 시료와 상관없는 값이고, 분석에는 들어가지 않아요.</div>`;
+  }else out+=`<div class="by" style="margin-top:8px">측정한 숫자를 표로 적어요. 먼저 항목을 추가하세요. 예: 수득량, 단위 g</div>`;
+  out+=`<div class="g2" style="margin-top:2px">`+gField('항목 이름',`<input id="mc-label" placeholder="예: 수득량" list="ml-l">${dl('ml-l',labels)}`)+gField('단위',`<input id="mc-unit" placeholder="g, mL, nm…" list="ml-u">${dl('ml-u',UNITS)}`)+`</div>`+
+    `<div class="grow" style="padding:12px 0 0"><button class="btn ghost sm" data-a="mColAdd">${I.plus}항목 추가</button>${others.length?`<button class="btn ghost sm" data-a="mRowsPull">다른 단계의 시료 ${others.length}개 불러오기</button>`:''}${cols.length&&cols.length+(e.steps.some(q=>q!==s&&(q.mcols||[]).length)?1:0)>1?`<button class="btn ghost sm" data-a="mCalcToggle">${V.mcalc?'계산 닫기':'계산 항목 만들기'}</button>`:''}${mYieldPair(s)?`<button class="btn orange sm" data-a="mYield">수득률 계산 추가</button>`:''}</div>`;
+  const otherCols=[...new Set(e.steps.filter(q=>q!==s).flatMap(q=>(q.mcols||[]).filter(c=>!c.calc).map(mKey)))].filter(k=>!cols.some(c=>mKey(c)===k));
+  if(V.mcalc&&cols.length+otherCols.length>1){const o=cols.filter(c=>!c.calc).map(c=>[mKey(c),mKey(c)]).concat(otherCols.map(k=>[k,k+' · 다른 단계']));
+    out+=`<div class="mcalc"><div class="g2">`+gField('이 값을',`<select id="mk-a">${gOpt(o,o[0][0])}</select>`)+gField('계산',`<select id="mk-op">${gOpt([['÷','÷ 나누기'],['×','× 곱하기'],['−','− 빼기'],['+','+ 더하기']],'÷')}</select>`)+
+      gField('이 값으로',`<select id="mk-b">${gOpt(o,(o[1]||o[0])[0])}</select>`)+gField('마지막에',`<select id="mk-k">${gOpt([['1','그대로'],['100','× 100 (%)']],'1')}</select>`)+
+      gField('새 항목 이름',`<input id="mk-label" placeholder="예: 수득률">`)+gField('단위',`<input id="mk-unit" placeholder="예: %">`)+`</div>`+
+      `<button class="btn black sm" data-a="mCalcAdd" style="margin-top:12px">계산 항목 추가</button><div class="by" style="margin-top:8px">값을 고치면 자동으로 다시 계산돼요. 이 단계에 없는 값은 같은 시료 이름으로 다른 단계에서, 그래도 없으면 "공통" 줄에서 가져와요.</div></div>`}
+  out+=`<div id="msug">${mSugHTML(s)}</div>`;
+  return out+`<div class="by" style="margin-top:10px">시료 이름이 있는 값은 "결과 분석"에 자동으로 모여요.</div></div>`;
+}
+// 표와 열 역할로 조건·결과·기록을 만듦. 숫자로 읽지 못한 결과 칸 수를 돌려줌
+function gApply(g,p,roles,idOf){
+  const idx=k=>roles.map((x,i)=>x===k?i:-1).filter(i=>i>=0),ni=idx('name')[0],pi=idx('rep')[0],ci=idx('cond'),ri=idx('result'),ti=idx('note');let bad=0;
+  const sig=()=>g.conds.map(c=>c.label).join(SEP)+'//'+g.results.map(r=>r.label).join(SEP),old=sig(),oldExtra=g.conds.map(c=>c.extra||[]);
+  g.conds=ci.map((i,k)=>({key:'c'+k,label:p.header[i],extra:[]}));
+  g.results=ri.map((i,k)=>({key:'r'+k,label:p.header[i],dp:0,isYield:/수율|수득률|yield/i.test(p.header[i])&&p.header[i].includes('%')}));
+  g.repLabel=pi!==undefined?p.header[pi]:'';
+  g.rows=p.rows.map((row,n)=>{const x={id:idOf?idOf(row,n):uid(),name:ni!==undefined?row[ni]??'':'실험 '+(n+1),rep:pi!==undefined?(row[pi]??'').trim():'',cond:{},res:{},miss:{},note:ti.map(i=>row[i]??'').filter(Boolean).join(' / ')};
+    ci.forEach((i,k)=>x.cond['c'+k]=(row[i]??'').trim()||'–');
+    ri.forEach((i,k)=>{const c=parseCell(row[i]);x.res['r'+k]=c.v;if(c.miss)x.miss['r'+k]=c.miss;if(c.bad)bad++;if(c.dp)g.results[k].dp=Math.min(4,Math.max(g.results[k].dp,c.dp))});return x});
+  if(sig()===old)g.conds.forEach((c,i)=>c.extra=oldExtra[i]); // 열이 그대로면 추가한 값·계획·문헌 유지
+  else{g.plans=[];g.refs.forEach(x=>{x.cond=null;x.rkey=null;x.value=null})}
+  if(!g.results.some(r=>r.key===g.curRes))g.curRes=g.results.length?(g.results.find(r=>r.isYield)||g.results[0]).key:null;
+  return bad;
+}
+// 자료 출처가 "단계 측정값"이면 화면을 그릴 때마다 표를 다시 만듦
+const COND_RE=/농도|온도|시간|부피|원액|첨가|넣은|조건|비율|당량|pH|속도|전압|\((M|mM|mL|μL|L|℃|°C|분|시간|h|min|rpm)\)\s*$/i;
+function gSync(e){
+  const g=e.gap||(e.gap=defaultGap());if(!g.source)g.source=g.rows.length?'table':'steps';
+  if(g.source!=='steps'){g.bySample=false;return}
+  const sets=measSets(e);g.mset=Math.min(g.mset||0,Math.max(0,sets.length-1));g.msetNames=sets.length>1?sets.map(ss=>ss.map(q=>q.title).join(' + ')):[];
+  const p=measTable(e,sets.length>1?sets[g.mset]:null),clear=()=>{Object.assign(g,{conds:[],results:[],repLabel:'',rows:[],curRes:null});g.mhead=p?p.header:null;g.bySample=false};
+  if(!p){clear();return}
+  g.mroles=g.mroles||{};
+  const isNum=j=>{const v=p.rows.map(r=>r[j]).filter(q=>q!=='');return v.length>0&&v.every(q=>NONE_RE.test(q)||!isNaN(Number(String(q).replace(/,/g,''))))};
+  // 추정: 글자로 된 값은 메모, 숫자는 이름·단위가 "바꿔 준 값"처럼 보이면 조건, 아니면 결과
+  const roles=p.header.map((h,i)=>i===0?'name':g.mroles[h]||(!isNum(i)?'note':COND_RE.test(h)&&!RESULT_RE.test(h)?'cond':'result'));
+  g.mnow=roles;
+  if(!roles.includes('result')){clear();g.mnow=roles;return} // 숫자 결과가 하나도 없음
+  // 조건으로 볼 항목이 없으면 시료 자체를 비교 대상으로 삼음 (예: H₂salen과 Co(salen))
+  g.bySample=!roles.includes('cond');
+  if(g.bySample)gApply(g,{header:['시료','시료'].concat(p.header.slice(1)),rows:p.rows.map(r=>[r[0],r[0]].concat(r.slice(1)))},['name','cond'].concat(roles.slice(1)),row=>'m:'+row[0]);
+  else gApply(g,p,roles,row=>'m:'+row[0]);
+  g.mhead=p.header;
+}
+
+/* --- 화면 --- */
+const fv=(v,r)=>v.toFixed(r.dp), fm=(v,r)=>v.toFixed(Math.min(r.dp+1,4));
+const gCell=(e,r)=>{const v=e.res[r.key];return v!=null?fv(v,r):(e.miss&&e.miss[r.key]==='none'?'없음':'')};
+const gOpt=(list,cur)=>list.map(([v,n])=>`<option value="${esc(v)}"${String(v)===String(cur)?' selected':''}>${esc(n)}</option>`).join('');
+const gField=(label,inner)=>`<div class="gf"><label class="label">${esc(label)}</label>${inner}</div>`;
+const gCondInputs=(g,pre)=>g.conds.map(c=>gField(c.label,`<input id="${pre}-${c.key}" list="${pre}l-${c.key}"><datalist id="${pre}l-${c.key}">${gVals(g,c).map(v=>`<option value="${esc(v)}">`).join('')}</datalist>`)).join('');
+const gHasRep=g=>g.rows.some(e=>e.rep), gHasNote=g=>g.rows.some(e=>e.note);
+
+// 조사 "로/으로" 고르기 (숫자와 한글의 받침을 보고)
+const josaRo=w=>{const ch=String(w).trim().slice(-1),d='0123456789'.indexOf(ch);
+  if(d>=0)return [1,0,0,1,0,0,1,0,0,0][d]?'으로':'로'; // 0영 3삼 6육은 받침이 있고, 7칠 8팔은 ㄹ받침이라 "로"
+  const c=ch.charCodeAt(0);if(c>=0xAC00&&c<=0xD7A3){const j=(c-0xAC00)%28;return j===0||j===8?'로':'으로'}return ''}; // 영문·괄호로 끝나면 정할 수 없음
+// "A에서 B로" (조사를 정할 수 없으면 "A → B")
+const fromTo=(a,b)=>{const j=josaRo(b);return j?`${esc(a)}에서 ${esc(b)}${j}`:`${esc(a)} → ${esc(b)}`};
+// 한 번만 잰 값은 적은 자릿수 그대로, 평균은 한 자리 더
+const fx=(v,r,n)=>n>1?fm(v,r):fv(v,r);
+// 조건마다, 나머지 조건이 같은 묶음에서 가장 멀리 떨어진 두 값의 비교만 고름
+function gKeyEffects(g,r){const best=new Map();gEffects(g,r).forEach(x=>{const k=g.conds.indexOf(x.cond)+'|'+x.others,span=x.so[2]-x.so[1];if(!best.has(k)||span>best.get(k).span)best.set(k,{...x,span})});return [...best.values()]}
+
+function gapHTML(e){
+  gSync(e);const g=G();if(!V.gopen){V.gopen={in:!g.rows.length};V.gauto=!g.rows.length}
+  if(V.gauto&&g.rows.length){V.gopen.in=false;V.gauto=false}
+  const acc=(k,title,sub,body)=>`<button class="gacc${V.gopen[k]?' on':''}" data-a="gtab" data-t="${k}" aria-expanded="${!!V.gopen[k]}"><div><b>${title}</b><span>${sub}</span></div><i>${V.gopen[k]?'−':'+'}</i></button>${V.gopen[k]?`<div class="gaccb">${body()}</div>`:''}`;
+  const mt=measTable(e),nAll=allMeas(e).length;
+  const empty=g.source==='steps'&&nAll&&!mt?`<b>공통 기록만 있어요</b>시료 이름이 붙은 측정값이 있어야 서로 비교할 수 있어요. 단계의 측정값 표에서 "+ 시료 이름" 칸에 시료를 추가하고 값을 적어 보세요.`
+    :g.source==='steps'&&mt?`<b>숫자로 된 측정값이 없어요</b>적은 값이 모두 글자예요. 숫자로 된 결과가 하나 이상 있어야 그래프를 그릴 수 있어요.`
+    :`<b>아직 분석할 숫자가 없어요</b>세 가지 방법 중 하나로 넣으면 그래프와 요약이 바로 나와요.<br>① 아래 "자료 넣기"에서 실험 PPT나 PDF, 사진을 AI가 읽게 하기<br>② 단계의 "자세히 · 메모"에서 측정값을 표로 적기<br>③ 아래 "자료 넣기"에서 표를 붙여넣기`;
+  let out=g.rows.length?gHome(g,e):`<div class="gintro">${empty}</div>`;
+  out+=`<div class="secname">더 보기</div>`+
+    acc('in','자료 넣기 · 바꾸기',g.source==='steps'?`지금: 단계에서 적은 측정값${mt?` ${mt.count}개`:''}`:g.rows.length?`지금: ${g.preset?'수업 자료의 결과':'붙여넣은 표'} ${g.rows.length}건`:'표 붙여넣기, 측정값으로 바꾸기',()=>gIn(g,e));
+  if(g.rows.length)out+=acc('cmp','실험 하나씩 비교','한 실험을 기준으로 나머지가 얼마나 다른지',()=>gCmp(g))+
+    (g.bySample?'':acc('map','조합 지도','해본 조합과 안 해본 조합을 표로 보기',()=>gMap(g)))+
+    acc('note','계획 · 참고 문헌',`계획 ${g.plans.length}건 · 문헌 ${g.refs.length}건`,()=>gNote(g));
+  return out+`<div style="height:36px"></div>`;
+}
+// 조건이 함께 바뀌어 "하나만 다른 쌍"이 없을 때: 그 조건의 가장 작은 값과 큰 값을 비교하고, 같이 바뀐 조건을 알려 줌
+function gTied(g,r){
+  if(g.bySample||g.conds.length<2)return [];
+  const has=new Set(gEffects(g,r).map(x=>x.cond.key)),out=[];
+  g.conds.forEach(c=>{const vs=gVals(g,c).filter(v=>g.rows.some(q=>q.cond[c.key]===v&&q.res[r.key]!=null));if(has.has(c.key)||vs.length<2)return;
+    const A=g.rows.filter(q=>q.cond[c.key]===vs[0]),B=g.rows.filter(q=>q.cond[c.key]===vs[vs.length-1]),sa=gStat(A,r),sb=gStat(B,r);if(!sa.n||!sb.n)return;
+    const uniq=(rows,k)=>[...new Set(rows.map(q=>q.cond[k]))].join(', ');
+    const also=g.conds.filter(o=>o!==c).map(o=>({label:o.label,from:uniq(A,o.key),to:uniq(B,o.key)})).filter(o=>o.from!==o.to);
+    out.push({cond:c,from:vs[0],to:vs[vs.length-1],meanA:sa.mean,meanB:sb.mean,nA:sa.n,nB:sb.n,delta:sb.mean-sa.mean,also})});
+  return out;
+}
+const gTiedLine=(g,r,x)=>`${x.cond.label} ${x.from} → ${x.to}: ${r.label}${Math.max(x.nA,x.nB)>1?' 평균':''} ${fx(x.meanA,r,x.nA)} → ${fx(x.meanB,r,x.nB)}. 단, ${x.also.map(o=>`${o.label}(${o.from} → ${o.to})`).join(', ')}도 함께 바뀌었으므로 어느 조건의 영향인지는 구분할 수 없다.`;
+// 결론에 넣을 문장 한 줄 (카드의 "결론에 넣기"와 "계산 결과 넣기"가 같이 씀)
+function gLine(g,r,x){const v=gVerdict(x);
+  const n=Math.max(x.nA,x.nB);
+  if(g.bySample)return `${r.label}: ${x.from} ${fx(x.meanA,r,x.nA)}, ${x.to} ${fx(x.meanB,r,x.nB)} (차이 ${fx(Math.abs(x.delta),r,n)}).`;
+  return `${x.cond.label} ${x.from} → ${x.to}: ${r.label}${n>1?' 평균':''} ${fx(x.meanA,r,x.nA)} → ${fx(x.meanB,r,x.nB)} (${x.delta>0?'+':x.delta<0?'−':''}${fx(Math.abs(x.delta),r,n)}`+
+    (x.others?`; ${x.others}`:'')+(x.paired?`; 같은 ${g.repLabel||'반복'}끼리 ${x.paired.n}쌍 중 증가 ${x.paired.up}, 감소 ${x.paired.down}`:'')+`). `+
+    (v==='편차 범위 안'?'이 차이는 반복 측정의 표준편차보다 작다.':v==='반복 없음'?'반복 측정이 없어 편차와 비교하지 못했다.':'이 차이는 반복 측정의 표준편차보다 크다.')}
+// 시료가 3개 이상이고 시료끼리 비교할 때: 가장 큰 값과 가장 작은 값
+function gExtremes(g,r){const xs=g.rows.filter(q=>q.res[r.key]!=null);if(xs.length<2)return null;const s=[...xs].sort((a,b)=>a.res[r.key]-b.res[r.key]);return {min:s[0],max:s[s.length-1]}}
+
+// 첫 화면: 무엇이 달라졌는지 → 그래프 → 요약표 → 확인할 값 → 안 해본 조합
+function gHome(g,e){
+  const r=gRes(g),mt=measTable(e),rp=RP();
+  let o=`<div class="gintro"><b>${g.rows.length}건의 결과를 정리했어요</b>${g.source==='steps'?`단계에서 적은 측정값 ${mt?mt.count:0}개로 만들었어요.${g.bySample?' 조건으로 둔 항목이 없어서 시료끼리 비교해요.':''}`:g.preset?'수업 자료에 실린 6개 조의 결과예요. 시안이라 그래프에서 읽은 값을 넣어 두었어요.':'붙여넣은 표로 만들었어요.'}</div>`;
+  if(g.source==='steps'&&(g.msetNames||[]).length>1)o+=`<div class="gh" style="padding-top:16px;font-size:13px">어느 측정을 볼까요?</div><div class="gpick">${g.msetNames.map((n,i)=>`<button class="${i===g.mset?'on':''}" data-a="gSetPick" data-i="${i}">${esc(n)}</button>`).join('')}</div><div class="gnote">시료와 항목이 서로 겹치지 않는 측정은 따로 정리해요.</div>`;
+  if(g.results.length>1)o+=`<div class="gh" style="padding-top:16px;font-size:13px">어떤 값을 볼까요?</div><div class="gpick">${g.results.map(x=>`<button class="${x.key===r.key?'on':''}" data-a="gResPick" data-k="${x.key}">${esc(x.label)}</button>`).join('')}</div>`;
+  // 1. 무엇이 달라졌나
+  const many=g.bySample&&g.rows.length>2,eff=many?[]:gKeyEffects(g,r);V.glines=[];
+  const addBtn=line=>{V.glines.push(line);return `<button class="add" data-a="rpAddLine" data-i="${V.glines.length-1}" ${rp.concl.includes(line)?'disabled':''}>${rp.concl.includes(line)?'넣음':'결론에 넣기'}</button>`};
+  if(eff.length){o+=`<div class="gh">${g.bySample?'두 시료의 차이':'바꾼 것에 따라 달라진 점'}</div><div class="gcards">`+eff.map(x=>{const v=gVerdict(x),up=x.delta>0,same=x.delta===0;
+      const word=v==='편차 범위 안'?'차이가 작아요':same?'변하지 않았어요':up?'커졌어요':'작아졌어요';
+      if(g.bySample)return `<div class="gcard"><div class="ic">↔</div><div style="flex:1;min-width:0"><div class="t">${esc(x.from)} ↔ ${esc(x.to)}</div>`+
+        `<div class="d">${esc(r.label)} <b>${fx(x.meanA,r,x.nA)}</b> / <b>${fx(x.meanB,r,x.nB)}</b></div><div class="s">차이 ${fx(Math.abs(x.delta),r,Math.max(x.nA,x.nB))} · ${same?'두 값이 같아요':`${esc(up?x.to:x.from)} 쪽이 커요`}</div><div class="addrow">${addBtn(gLine(g,r,x))}</div></div></div>`;
+      return `<div class="gcard"><div class="ic ${v==='증가'||(v==='반복 없음'&&up)?'up':v==='감소'||(v==='반복 없음'&&!up&&!same)?'dn':''}">${same?'=':up?'▲':'▼'}</div><div style="flex:1;min-width:0"><div class="t">${esc(x.cond.label)} ${fromTo(x.from,x.to)}</div>`+
+        `<div class="d">${esc(r.label)} ${x.nA>1||x.nB>1?'평균 ':''}<b>${fx(x.meanA,r,x.nA)} → ${fx(x.meanB,r,x.nB)}</b> · ${word}</div>`+
+        `<div class="s">${[x.others?`${x.others}일 때`:'',x.paired?`같은 ${esc(g.repLabel||'반복')}끼리 ${x.paired.n}쌍 중 ${x.paired.up}쌍 커짐, ${x.paired.down}쌍 작아짐`:'',v==='편차 범위 안'?'측정할 때마다 흔들리는 정도(표준편차)보다 차이가 작아요':v==='반복 없음'?'한 번씩만 측정해서 우연인지는 알 수 없어요':''].filter(Boolean).join(' · ')}</div><div class="addrow">${addBtn(gLine(g,r,x))}</div></div></div>`}).join('')+`</div>`}
+  const tied=many?[]:gTied(g,r);
+  if(tied.length)o+=`<div class="gh">함께 바뀐 조건</div><div class="gnote">아래 조건은 다른 조건과 같이 바뀌어서, 그 조건만의 효과는 따로 알 수 없어요.</div><div class="gcards">`+tied.map(x=>{const up=x.delta>0,same=x.delta===0;
+    return `<div class="gcard"><div class="ic" style="border-style:dashed">${same?'=':up?'▲':'▼'}</div><div style="flex:1;min-width:0"><div class="t">${esc(x.cond.label)} ${fromTo(x.from,x.to)}</div>`+
+      `<div class="d">${esc(r.label)} ${Math.max(x.nA,x.nB)>1?'평균 ':''}<b>${fx(x.meanA,r,x.nA)} → ${fx(x.meanB,r,x.nB)}</b> · ${same?'변하지 않았어요':up?'커졌어요':'작아졌어요'}</div>`+
+      `<div class="s">같이 바뀐 것: ${x.also.map(q=>`${esc(q.label)} ${esc(q.from)} → ${esc(q.to)}`).join(' · ')}</div><div class="addrow">${addBtn(gTiedLine(g,r,x))}</div></div></div>`}).join('')+`</div>`;
+  if(eff.length){}
+  else if(many){const ex=gExtremes(g,r);
+    if(ex)o+=`<div class="gh">시료 ${g.rows.length}개 중에서</div><div class="gcards">`+
+      [['up','▲','가장 큰 값',ex.max],['dn','▼','가장 작은 값',ex.min]].map(([c,ic,t,q])=>`<div class="gcard"><div class="ic ${c}">${ic}</div><div style="flex:1;min-width:0"><div class="t">${t} · ${esc(q.name)}</div><div class="d">${esc(r.label)} <b>${fv(q.res[r.key],r)}</b></div></div></div>`).join('')+
+      `<div class="gcard"><div class="ic">↔</div><div style="flex:1;min-width:0"><div class="t">가장 큰 값과 작은 값의 차이</div><div class="d"><b>${fv(ex.max.res[r.key]-ex.min.res[r.key],r)}</b></div><div class="addrow">${addBtn(`${r.label}: 가장 큰 값은 ${ex.max.name}(${fv(ex.max.res[r.key],r)}), 가장 작은 값은 ${ex.min.name}(${fv(ex.min.res[r.key],r)})였다.`)}</div></div></div></div>`}
+  else if(g.conds.length&&!tied.length)o+=`<div class="gnote" style="padding-top:16px">조건 하나만 다른 실험 쌍이 없어서 비교할 수 없어요.</div>`;
+  // 2. 그래프
+  const svg=gChartSVG(g,r);
+  o+=`<div class="gh">그래프</div><div class="gnote">점 하나가 측정값 하나예요. 주황 선은 평균, 세로 막대는 측정값이 흩어진 정도, 빨간 점은 확인이 필요한 값이에요.</div>`+(svg?`<div class="gscroll" style="padding:12px 0 2px">${svg}</div>`:`<div class="gnote">이 항목에는 숫자로 된 값이 없어요.</div>`);
+  // 3. 요약표
+  const rows=gSummary(g,r),rep=rows.some(x=>x.st.n>1);
+  o+=`<div class="gh">${rep?'묶음별 평균':'결과 표'}</div><div class="gscroll"><table class="gt"><thead><tr>${g.conds.length?g.conds.map(c=>`<th>${esc(c.label)}</th>`).join(''):'<th>묶음</th>'}${rep?'<th>횟수</th><th>평균</th><th>표준편차</th><th>최소 – 최대</th>':g.results.map(x=>`<th>${esc(x.label)}</th>`).join('')}</tr></thead><tbody>`+
+    rows.map(x=>`<tr>${(g.conds.length?x.vals:['전체']).map(v=>`<td>${esc(v)}</td>`).join('')}`+(rep?`<td>${x.st.n}${x.st.none?` · 없음 ${x.st.none}`:''}</td><td>${x.st.n?(x.st.n>1?fm(x.st.mean,r):fv(x.st.mean,r)):''}</td><td>${x.st.sd!=null?fm(x.st.sd,r):''}</td><td>${x.st.n?fv(x.min,r)+' – '+fv(x.max,r):''}</td>`
+      :g.results.map(q=>`<td class="${q.key===r.key?'cur':'mu'}">${gCell(x.list[0],q)}</td>`).join(''))+`</tr>`).join('')+`</tbody></table></div>`;
+  // 4. 확인이 필요한 값
+  const fl=gFlags(g,r),bad=g.rows.filter(x=>fl.has(x.id));
+  if(bad.length)o+=`<div class="gh">확인이 필요한 값 ${bad.length}개</div><div class="gcards">`+bad.map(x=>`<div class="gcard"><div class="ic" style="color:#C2504A">!</div><div><div class="t">${esc(x.name)} · ${fv(x.res[r.key],r)}</div><div class="d">${esc(fl.get(x.id))}. 잘못 적었는지, 실제로 달랐는지 확인해 보세요.</div></div></div>`).join('')+`</div>`;
+  // 5. 아직 안 해본 조합 (시료끼리 비교할 때는 해당 없음)
+  if(g.conds.length&&!g.bySample){const rk=gRank(g,r),all=[...rk.byKey.values()],gm=gGroups(g),planSet=new Set(g.plans.map(pl=>gKey(g,pl)).filter(k=>!gm.has(k)));
+    const list=rk.ranked.slice(0,5);V.gtop=list;
+    if(all.length){o+=`<div class="gh">아직 안 해본 조합 ${all.length}개</div><div class="gnote">전체 ${gTotal(g)}가지 중 ${gm.size}가지를 했어요.${list.length?' 주변 결과가 좋았던 순서로 보여줘요.':''}${gm.size/gTotal(g)<.34&&gTotal(g)>=12?' 조건들이 원래 함께 바뀌는 실험(묽히면서 섞는 경우 등)이라면 이 목록은 의미가 없을 수 있어요.':''}</div><div class="gcards">`+
+      (list.length?list.slice(0,3).map((q,i)=>`<div class="gcard"><div class="ic">${i+1}</div><div style="flex:1;min-width:0"><div class="t">${g.conds.map((c,k)=>`${esc(c.label)} ${esc(q.vals[k])}`).join(' · ')}</div><div class="s">가까운 조합의 평균 ${fm(q.score,r)}</div></div>${planSet.has(q.key)?'<span class="tag o" style="align-self:center">계획됨</span>':`<button class="btn ghost sm" data-a="gPlanTop" data-i="${i}">계획에 추가</button>`}</div>`).join('')
+        :all.slice(0,3).map(q=>`<div class="gcard"><div class="ic">?</div><div><div class="t">${g.conds.map((c,k)=>`${esc(c.label)} ${esc(q.vals[k])}`).join(' · ')}</div></div></div>`).join(''))+`</div>`+
+      (all.length>3?`<div class="gnote">나머지는 아래 "조합 지도"에서 볼 수 있어요.</div>`:'')}
+    else o+=`<div class="gh">안 해본 조합이 없어요</div><div class="gnote">기록에 나온 값으로 만들 수 있는 ${gTotal(g)}가지 조합을 모두 했어요.</div>`}
+  return o;
+}
+
+// ① 표 넣기: 붙여넣기 → 열 역할 지정 → 가져오기, 한 건씩 추가
+function gIn(g,e){
+  const sets=measSets(e),mt=measTable(e,g.source==='steps'&&sets.length>1?sets[g.mset||0]:null);
+  let out=aiBox()+`<div class="msrc"><button class="${g.source==='steps'?'on':''}" data-a="gSrc" data-s="steps">단계에서 적은 측정값${mt?` · ${mt.count}`:''}</button><button class="${g.source==='table'?'on':''}" data-a="gSrc" data-s="table">표 · 수업 자료</button></div>`;
+  if(g.source==='steps'){
+    if(!mt)return out+`<div class="empty"><div class="big">${I.flask}</div>아직 적은 측정값이 없어요.<br>단계의 "자세히 · 메모"에서 측정값을 적으면<br>여기에 표로 모이고 그래프가 그려져요.</div>`;
+    out+=`<div class="gh">측정 이름마다 역할</div><div class="gnote">바꿔 가며 실험한 값은 "조건", 측정한 값은 "결과"로 두세요. 자동으로 추정했고, 바꾸면 기억해요.${g.bySample?' 지금은 조건으로 둔 항목이 없어서 시료끼리 비교하고 있어요.':''}</div><div style="margin-top:10px;border-top:1px solid var(--line)">`+
+      g.mhead.slice(1).map((h,i)=>`<div class="grole"><div class="n"><b>${esc(h)}</b><span>${esc(mt.rows.slice(0,3).map(r=>r[i+1]).filter(Boolean).join(', '))}</span></div><select data-g="mrole" data-h="${esc(h)}" aria-label="${esc(h)}의 역할">${gOpt([['cond','조건 (바꿔 준 값)'],['result','결과 (측정한 값)'],['note','메모'],['skip','무시']],g.mnow[i+1])}</select></div>`).join('')+
+      `</div><div class="gh">모인 표 · 시료 ${g.rows.length}개</div>`+gRowsTable(g,true)+
+      `<div class="gnote">값을 고치려면 그 단계의 측정값에서 고치세요.</div><div class="grow"><button class="btn ghost sm" data-a="gExport">CSV로 내보내기</button></div>`;
+    return out;
+  }
+  if(g.preset&&g.rows.length)out+=`<div class="hint">수업 자료에 실린 6개 조의 결과가 들어 있어요. 그래프에서 읽은 값이라 원본 숫자와 조금 다를 수 있어요.</div>`;
+  if(mt)out+=`<div class="gnote">단계에 적은 측정값이 ${mt.count}개 있어요. 위에서 "단계에서 적은 측정값"을 누르면 그 값으로 볼 수 있어요.</div>`;
+  out+=gField('표 붙여넣기 · 첫 줄은 열 이름',`<textarea data-gi="paste" placeholder="엑셀, 마크다운, CSV에서 복사한 표">${esc(V.gpaste||'')}</textarea>`)+
+    `<div class="grow"><button class="btn black sm" data-a="gRead">표 읽기</button><button class="btn ghost sm" data-a="gSample">예시 표 넣기</button></div>`+
+    `<div class="gnote">조건은 열마다 하나씩 나눠 적어요. "0.1 M + KSCN 5 mL"를 한 칸에 쓰지 말고 농도 열과 부피 열로 나눠요.</div>`;
+  if(V.gmsg)out+=`<div class="hint">${esc(V.gmsg)}</div>`;
+  if(V.gai&&V.gparsed)out+=`<div class="hint">Claude가 <b>${V.gai.n}줄</b>을 읽어서 위 칸에 채웠어요 (${esc(V.gai.used.slice(0,4).join(', '))}${V.gai.used.length>4?' 등':''}). 숫자를 잘못 읽었을 수 있으니 자료와 맞는지 확인하세요. 위 칸에서 고친 뒤에는 "표 읽기"를 다시 눌러요.${(V.gai.skipped||[]).length?`<br>한 번에 보낼 수 있는 그림 수를 넘어서 사진 ${V.gai.skipped.length}장은 빼고 읽었어요. 나눠서 다시 올려 주세요.`:''}${V.gai.notes?`<br>Claude의 메모: ${esc(V.gai.notes)}`:''}</div>`;
+  if(V.gparsed){
+    out+=`<div class="gh">열마다 역할 지정</div><div class="gnote">자동으로 추정했어요. 틀린 곳만 바꾸세요. 조건도 결과도 아닌 열(계산값 등)은 "무시"로 두세요.</div><div style="margin-top:10px;border-top:1px solid var(--line)">`+
+      V.gparsed.header.map((h,i)=>`<div class="grole"><div class="n"><b>${esc(h)}</b><span>${esc(V.gparsed.rows.slice(0,3).map(r=>r[i]??'').join(', '))}</span></div>`+
+        `<select data-g="role" data-i="${i}" aria-label="${esc(h)} 열의 역할">${gOpt(Object.entries(ROLE),V.groles[i])}</select></div>`).join('')+
+      `</div><div class="grow"><button class="btn orange" data-a="gImport">가져오기</button></div>`+
+      `<div class="gnote">결과 칸이 비어 있으면 "측정 안 함", "없음"이나 "–"이면 "측정했지만 없음"으로 구분해요. 가져오면 이 실험의 기존 표는 바뀌어요.</div>`;
+  }
+  if(g.results.length){
+    out+=`<div class="gh">한 건 추가</div><div class="gpad"><div class="g2">`+gField('이름',`<input id="ga-name">`)+(g.repLabel?gField(g.repLabel,`<input id="ga-rep">`):'')+
+      gCondInputs(g,'ga')+g.results.map(r=>gField(r.label,`<input id="ga-${r.key}" placeholder="숫자 또는 없음">`)).join('')+`</div>`+gField('메모',`<input id="ga-note">`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"')+`</div>`+
+      `<div class="grow"><button class="btn black" data-a="gAdd">${I.plus}추가</button></div>`+
+      `<div class="gh">기록 ${g.rows.length}건</div>`+gRowsTable(g)+
+      `<div class="grow"><button class="btn ghost sm" data-a="gExport">CSV로 내보내기</button><button class="btn ghost sm" data-a="gClear" style="color:#C2504A">표 비우기</button></div>`;
+  }
+  return out;
+}
+function gRowsTable(g,ro){ // ro = 읽기 전용 (단계 측정값에서 만든 표)
+  if(!g.rows.length)return `<div class="rs-none" style="padding:10px 18px">아직 기록이 없어요.</div>`;
+  return `<div class="gscroll"><table class="gt"><thead><tr><th>이름</th>${gHasRep(g)?`<th>${esc(g.repLabel||'반복')}</th>`:''}${g.conds.map(c=>`<th>${esc(c.label)}</th>`).join('')}${g.results.map(r=>`<th>${esc(r.label)}</th>`).join('')}${gHasNote(g)?'<th>메모</th>':''}<th></th></tr></thead><tbody>`+
+    g.rows.map(x=>`<tr><td>${esc(x.name)}</td>${gHasRep(g)?`<td>${esc(x.rep)}</td>`:''}${g.conds.map(c=>`<td>${esc(x.cond[c.key])}</td>`).join('')}${g.results.map(r=>`<td>${gCell(x,r)}</td>`).join('')}${gHasNote(g)?`<td class="wrap">${esc(x.note)}</td>`:''}<td>${ro?'':`<button class="x" data-a="gDel" data-id="${x.id}">삭제</button>`}</td></tr>`).join('')+`</tbody></table></div>`;
+}
+
+// ② 비교표 + 조건 하나만 바꿨을 때의 변화
+function gCmp(g){
+  if(!g.rows.length)return `<div class="empty"><div class="big">${I.doc}</div>비교할 기록이 없어요.<br>단계에서 측정값을 적거나 "데이터"에서 표를 넣으세요.</div>`;
+  if(!g.rows.some(x=>x.id===V.gbase))V.gbase=g.rows[0].id;
+  const base=g.rows.find(x=>x.id===V.gbase),r=gRes(g),flags=gFlags(g,r);
+  let out=gField('기준 실험',`<select data-g="base">${gOpt(g.rows.map(x=>[x.id,x.name]),V.gbase)}</select>`)+
+    `<div class="gleg"><span><i class="l-base"></i>기준</span><span><i class="l-diff"></i>기준과 다른 조건</span><span><b class="flag">⚠</b> 확인이 필요한 값</span></div>`+
+    `<div class="gscroll"><table class="gt"><thead><tr><th>이름</th>${gHasRep(g)?`<th>${esc(g.repLabel||'반복')}</th>`:''}${g.conds.map(c=>`<th>${esc(c.label)}</th>`).join('')}${g.results.map(x=>`<th>${esc(x.label)}</th>`).join('')}<th>기준 대비</th>${gHasNote(g)?'<th>메모</th>':''}</tr></thead><tbody>`+
+    g.rows.map(x=>{const isB=x.id===V.gbase,v=x.res[r.key],bv=base.res[r.key];let d='';
+      if(isB)d='–';else if(v!=null&&bv!=null){const k=v-bv;d=k>0?`<span class="upv">▲ ${fv(k,r)}</span>`:k<0?`<span class="dn">▼ ${fv(-k,r)}</span>`:fv(0,r)}
+      return `<tr class="${isB?'base':''}"><td>${esc(x.name)}${isB?' <span class="tag o">기준</span>':''}</td>${gHasRep(g)?`<td>${esc(x.rep)}</td>`:''}`+
+        g.conds.map(c=>`<td class="${x.cond[c.key]!==base.cond[c.key]?'diff':''}">${esc(x.cond[c.key])}</td>`).join('')+
+        g.results.map(q=>`<td class="${q.key===r.key?'cur':'mu'}">${gCell(x,q)}${q.key===r.key&&flags.has(x.id)?` <b class="flag" title="${esc(flags.get(x.id))}">⚠</b>`:''}</td>`).join('')+
+        `<td>${d}</td>${gHasNote(g)?`<td class="wrap">${esc(x.note)}</td>`:''}</tr>`}).join('')+`</tbody></table></div>`;
+  const eff=gEffects(g,r),MAX=40;
+  if(eff.length){const anyP=eff.some(x=>x.paired),anyO=g.conds.length>1;
+    out+=`<div class="gh">조건 하나만 바꿨을 때</div><div class="gnote">"${esc(r.label)}" 평균이 얼마나 달라졌는지예요.</div><div class="gscroll"><table class="gt"><thead><tr><th>바꾼 조건</th><th>값</th>${anyO?'<th>나머지 조건</th>':''}<th>평균 변화</th><th>횟수</th>${anyP?`<th>같은 ${esc(g.repLabel||'반복')}끼리</th>`:''}</tr></thead><tbody>`+
+      eff.slice(0,MAX).map(x=>`<tr><td>${esc(x.cond.label)}</td><td>${esc(x.from)} → ${esc(x.to)}</td>${anyO?`<td>${esc(x.others)}</td>`:''}<td>${x.delta>0?`<span class="upv">▲ ${fm(x.delta,r)}</span>`:x.delta<0?`<span class="dn">▼ ${fm(-x.delta,r)}</span>`:fm(0,r)}</td><td>${x.nA}회 → ${x.nB}회</td>${anyP?`<td>${x.paired?`${x.paired.n}쌍 중 증가 ${x.paired.up} · 감소 ${x.paired.down}`:''}</td>`:''}</tr>`).join('')+
+      `</tbody></table></div>`+(eff.length>MAX?`<div class="gnote">전체 ${eff.length}건 중 ${MAX}건만 보여요.</div>`:'');
+  }
+  return out;
+}
+
+// ③ 조합 지도
+function gMap(g){
+  if(!g.rows.length)return `<div class="empty"><div class="big">${I.doc}</div>단계에서 측정값을 적거나 "데이터"에서 표를 넣으면 조합 지도가 그려져요.</div>`;
+  if(!g.conds.length)return `<div class="empty">조건 열이 없어서 조합 지도를 그릴 수 없어요.<br>조건(농도, 온도 등)을 열마다 하나씩 나눠 적은 표를 가져오세요.</div>`;
+  const r=gRes(g),two=g.conds.length>1;
+  let ax=V.gax||0;if(ax>=g.conds.length)ax=0;let ay=V.gay??1;if(two&&(ay>=g.conds.length||ay===ax))ay=(ax+1)%g.conds.length;V.gax=ax;V.gay=ay;
+  const X=g.conds[ax],Y=two?g.conds[ay]:null,rest=g.conds.filter(c=>c!==X&&c!==Y);V.gfix=V.gfix||{};
+  rest.forEach(c=>{if(!gVals(g,c).includes(V.gfix[c.key]))V.gfix[c.key]=gVals(g,c)[0]});
+  const names=g.conds.map((c,i)=>[i,c.label]);
+  let out=(g.results.length>1?gField('볼 값',`<select data-g="curRes">${gOpt(g.results.map(x=>[x.key,x.label]),r.key)}</select>`):'')+`<div class="gpad"><div class="g2">`+gField('가로축',`<select data-g="ax">${gOpt(names,ax)}</select>`)+(two?gField('세로축',`<select data-g="ay">${gOpt(names,ay)}</select>`):'')+
+    rest.map(c=>gField(c.label+' 고정',`<select data-g="fix" data-k="${c.key}">${gOpt(gVals(g,c).map(v=>[v,v]),V.gfix[c.key])}</select>`)).join('')+
+    gField('좋은 결과',`<select data-g="better">${gOpt([['high','높은 값'],['low','낮은 값']],g.better)}</select>`)+`</div></div>`;
+  const gm=gGroups(g),total=gTotal(g),done=gm.size,planSet=new Set(g.plans.map(p=>gKey(g,p)).filter(k=>!gm.has(k)));
+  const lit=new Map();g.refs.forEach(x=>{if(x.cond&&x.rkey===r.key&&x.value!=null){const k=gKey(g,x);if(!lit.has(k))lit.set(k,[]);lit.get(k).push(x.value)}});
+  const litT=k=>lit.has(k)?`<span class="lit">문헌 ${lit.get(k).map(v=>fv(v,r)).join(', ')}</span>`:'';
+  out+=`<div class="stats" style="margin-top:16px;border-top:1px solid var(--line)"><div><b>${total}</b><span>전체 조합</span></div><div><b>${done}</b><span>실행</span></div><div><b style="color:var(--orange)">${total-done}</b><span>미실행${planSet.size?` · 계획 ${planSet.size}`:''}</span></div></div>`+
+    `<div class="bar" style="margin:14px 18px 0"><i style="width:${(done/total*100).toFixed(1)}%"></i></div>`;
+  if(total>=20&&done/total<.1)out+=`<div class="gwarn"><b class="flag">⚠</b> 미실행이 전체의 90 %를 넘어요. 측정값이나 계산값 열이 "조건"으로 들어가지 않았는지 "데이터"에서 확인하세요.</div>`;
+  out+=`<div class="gleg"><span><i></i>실행 (평균 ± 표준편차)</span><span><i class="l-gap"></i>미실행</span><span><i class="l-plan"></i>계획됨</span></div>`;
+  const flags=gFlags(g,r),rank=gRank(g,r),xs=gVals(g,X),ys=Y?gVals(g,Y):[null];
+  out+=`<div class="gscroll"><table class="gt gmap"><thead><tr>${Y?`<th rowspan="2">${esc(Y.label)} ↓</th>`:''}<th colspan="${xs.length}">${esc(X.label)} →</th></tr><tr>${xs.map(v=>`<th>${esc(v)}</th>`).join('')}</tr></thead><tbody>`+
+    ys.map(yv=>`<tr>${Y?`<th>${esc(yv)}</th>`:''}`+xs.map(xv=>{
+      const key=g.conds.map(c=>c===X?xv:c===Y?yv:V.gfix[c.key]).join(SEP),list=gm.get(key);
+      if(!list){const q=rank.byKey.get(key),pl=planSet.has(key);return `<td class="gap${pl?' plan':''}">${pl?'계획됨':'미실행'}${q&&q.rank?`<span>후보 ${q.rank}순위</span>`:''}${litT(key)}</td>`}
+      const st=gStat(list,r),warn=list.some(x=>flags.has(x.id));
+      const big=st.n?`<b>${st.n>1?fm(st.mean,r):fv(st.mean,r)}</b>`:`<b class="none">${st.none?'없음':'기록 없음'}</b>`;
+      const nm=list.slice(0,2).map(x=>x.name).join(', ')+(list.length>2?` 외 ${list.length-2}`:'');
+      return `<td>${big}<span>${st.n>1?`± ${fm(st.sd,r)} · ${st.n}회`:`${list.length}회`}${warn?' <b class="flag">⚠</b>':''}</span><span>${esc(nm)}</span>${litT(key)}</td>`}).join('')+`</tr>`).join('')+`</tbody></table></div>`;
+  const top=rank.ranked.slice(0,5);V.gtop=top;
+  if(top.length)out+=`<div class="gh">다음 실험 후보</div><ol class="gnext">`+top.map((q,i)=>`<li><div>${g.conds.map((c,k)=>`${esc(c.label)} ${esc(q.vals[k])}`).join(', ')}<span>이웃 칸 평균 ${fm(q.score,r)}</span></div>${planSet.has(q.key)?'<span class="tag o">계획됨</span>':`<button class="btn ghost sm" data-a="gPlanTop" data-i="${i}">계획에 추가</button>`}</li>`).join('')+`</ol>`+
+    `<div class="gnote">규칙: 조건 하나만 한 단계 다른 이웃 칸들의 "${esc(r.label)}" 평균이 ${g.better==='high'?'높은':'낮은'} 순서예요. 이웃에 실행한 칸이 없으면 순위에서 빠져요.</div>`;
+  out+=`<div class="gh">아직 안 해본 값 추가</div><div class="gpad"><div class="g2">`+gField('조건',`<select id="gx-cond">${gOpt(names,0)}</select>`)+gField('추가할 값',`<input id="gx-val" placeholder="예: 0.5">`)+`</div></div>`+
+    `<div class="grow"><button class="btn ghost sm" data-a="gExAdd">값 추가</button></div>`+
+    `<div class="chips">${g.conds.map((c,i)=>(c.extra||[]).map(v=>`<span class="chip">${esc(c.label)}: ${esc(v)}<button data-a="gExRm" data-i="${i}" data-v="${esc(v)}" aria-label="삭제">×</button></span>`).join('')).join('')}</div>`;
+  return out;
+}
+
+// ④ 계획·문헌
+function gNote(g){
+  const gm=gGroups(g);
+  let out=gField('실험 목적과 가설',`<textarea class="txt" data-gi="goal" placeholder="예: SCN⁻ 농도를 높이면 사면체 착물 쪽으로 평형이 이동해 610 nm 부근 흡수가 커질 것이다.">${esc(g.goal)}</textarea>`)+
+    `<div class="gh">실험 계획</div>`;
+  if(!g.conds.length)out+=`<div class="gnote">표를 가져오면 조건별로 계획을 넣을 수 있어요.</div>`;
+  else{
+    out+=`<div class="gpad"><div class="g2">${gCondInputs(g,'gp')}</div>`+gField('메모',`<input id="gp-note" placeholder="이 조합을 하려는 이유">`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"')+`</div>`+
+      `<div class="grow"><button class="btn black" data-a="gPlan">${I.plus}계획에 추가</button></div>`;
+    if(g.plans.length)out+=`<div class="gscroll"><table class="gt"><thead><tr>${g.conds.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>메모</th><th>상태</th><th></th></tr></thead><tbody>`+
+      g.plans.map(p=>`<tr>${g.conds.map(c=>`<td>${esc(p.cond[c.key])}</td>`).join('')}<td class="wrap">${esc(p.note)}</td><td>${gm.has(gKey(g,p))?'<span class="tag o">실행함</span>':'<span class="tag">계획</span>'}</td><td><button class="x" data-a="gPlanDel" data-id="${p.id}">삭제</button></td></tr>`).join('')+`</tbody></table></div>`;
+    else out+=`<div class="gnote">계획한 조합은 조합 지도에 "계획됨"으로 표시돼요.</div>`;
+  }
+  const rf=V.gref||{},rbusy=AIS.busy&&AIS.kind==='ref';
+  out+=`<div class="gh">선행연구</div>`+(rbusy?`<div class="gpad" style="padding-top:10px"><div class="aist"><i class="spin"></i><span id="aimsg">${esc(AIS.msg)}</span></div><button class="btn ghost sm" data-a="aiStop" style="margin-top:10px">멈추기</button></div>`
+    :(curProv()!=='claude')?(P=>`<div class="aibox" style="margin-top:12px"><div class="d" style="margin-top:0">${P.name}로 문헌 정보를 채워요.</div><ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy" data-k="ref">지시문 복사</button></li><li>${P.name}를 열어 논문이나 자료 파일을 첨부하고, 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li><li>${P.name}의 답을 아래 칸에 붙여넣어요.</li></ol><textarea class="aiprompt" data-d="refans" style="background:#fff;min-height:96px" placeholder="${P.name}의 답 붙여넣기" aria-label="${P.name}의 답">${esc(V.refans||'')}</textarea><button class="btn orange sm" data-a="refPaste" style="margin-top:10px">답으로 채우기</button></div>`)(AI_PROV[curProv()])
+    :`<div class="grow" style="padding-top:10px"><button class="btn ghost sm" data-a="aiPick" data-k="ref">${I.doc}논문·자료 파일에서 채우기</button></div><div class="gnote">PPT나 PDF(앞 3쪽), 사진을 올리면 Claude가 읽고 제목·출처·요약을 채워요. 올린 쪽은 Claude로 전송돼요. 다른 AI를 쓰려면 "자료 넣기"에서 AI를 바꾸세요.</div>`)+
+    `<div class="gpad">`+gField('제목',`<input id="gr-title" value="${esc(rf.title||'')}" placeholder="논문·교재·자료 제목">`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"')+
+    `<div class="g2">`+gField('출처',`<input id="gr-source" value="${esc(rf.source||'')}" placeholder="저자, 학술지, 연도">`)+gField('링크 또는 DOI',`<input id="gr-link" value="${esc(rf.link||'')}" placeholder="https://… 또는 10.…">`)+`</div>`+
+    gField('내용 요약',`<textarea class="txt" id="gr-note" style="min-height:${rf.note?140:72}px" placeholder="이 문헌에서 참고할 내용">${esc(rf.note||'')}</textarea>`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"');
+  if(g.conds.length)out+=`<div class="gnote" style="padding-left:0;padding-right:0">선택: 문헌에 보고된 값이 있으면 조건과 함께 적으세요. 조합 지도의 그 칸에 "문헌"으로 표시돼요.</div><div class="g2">${gCondInputs(g,'gr')}`+
+    gField('결과 종류',`<select id="gr-rkey">${gOpt(g.results.map(x=>[x.key,x.label]),gRes(g).key)}</select>`)+gField('보고된 값',`<input id="gr-value" placeholder="숫자">`)+`</div>`;
+  out+=`</div><div class="grow"><button class="btn black" data-a="gRef">${I.plus}선행연구 추가</button></div>`;
+  if(g.refs.length)out+=`<div class="gscroll"><table class="gt"><thead><tr><th>제목</th><th>출처</th><th>요약</th><th>조건과 보고값</th><th></th></tr></thead><tbody>`+
+    g.refs.map(x=>{const url=/^https?:\/\//i.test(x.link)?x.link:/^10\.\d{4,}\//.test(x.link)?'https://doi.org/'+x.link:'';const rr=x.rkey?g.results.find(k=>k.key===x.rkey):null;
+      return `<tr><td class="wrap">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:inherit">${esc(x.title)}</a>`:esc(x.title)}</td><td class="wrap" style="font-weight:400">${esc(x.source)}</td><td class="wrap" style="font-weight:400">${esc(x.note)}</td>`+
+        `<td class="wrap" style="font-weight:400">${x.cond&&rr?g.conds.map(c=>`${esc(c.label)} ${esc(x.cond[c.key])}`).join(', ')+` → ${esc(rr.label)} ${fv(x.value,rr)}`:''}</td><td><button class="x" data-a="gRefDel" data-id="${x.id}">삭제</button></td></tr>`}).join('')+`</tbody></table></div>`;
+  return out;
+}
+
+/* --- 동작 --- */
+async function saveBlob(name,blob,done){ // PDF와 같은 저장 방식
+  let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(_){dl=null}
+  if(dl){try{await dl.save({filename:name,data:blob});toast(done)}catch(err){toast(err&&err.code==='declined'?'저장을 취소했어요':'이 화면에서는 저장할 수 없어요')}}
+  else{const u=URL.createObjectURL(blob);
+    if(!IN_CLAUDE){const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast(done);return} // 독립 웹사이트에서는 바로 내려받음
+    sheet(`<h3>파일 완성</h3><p>이 화면에서는 바로 저장이 막혀 있어요. 아래를 눌러 새 창에서 열어 보세요.</p><a class="btn black" href="${u}" target="_blank" rel="noopener" download="${esc(name)}" style="text-decoration:none">${esc(name)} 열기</a>`)}
+}
+Object.assign(A,{
+  gtab(el){const k=el.dataset.t;V.gopen=V.gopen||{};V.gopen[k]=!V.gopen[k];V.gauto=false;render();if(V.gopen[k]){const b=$(`.gacc[data-t="${k}"]`);if(b&&b.scrollIntoView)b.scrollIntoView({block:'start',behavior:'smooth'})}},
+  gResPick(el){const g=G();g.curRes=el.dataset.k;save();render()},
+  gSetPick(el){const g=G();g.mset=+el.dataset.i;g.curRes=null;V.gbase=null;V.gax=0;V.gay=1;V.gfix={};save();render()},
+  rpAddLine(el){const line=(V.glines||[])[+el.dataset.i];if(!line)return;const rp=RP();if(rp.concl.includes(line))return;
+    rp.concl=(rp.concl.trim()?rp.concl.replace(/\s+$/,'')+'\n':'')+'· '+line;save();render();toast('결론에 넣었어요 · "결과 모아보기"에서 고칠 수 있어요')},
+  rpAuto(el){const e=exp(),k=el.dataset.k,L=e.gap?gAuto(e.gap,k):[];if(!L.length)return toast('넣을 계산 결과가 없어요');
+    const rp=RP(),N=L.filter(l=>!rp[k].includes(l));if(!N.length)return toast('이미 모두 들어 있어요');
+    rp[k]=(rp[k].trim()?rp[k].replace(/\s+$/,'')+'\n':'')+N.map(l=>'· '+l).join('\n');save();render();toast(`계산 결과 <b>${N.length}줄</b>을 넣었어요`)},
+  gSample(){const txt=sampleTable(exp());if(!txt)return toast('이 실험의 수업 자료에는 여러 조의 결과가 없어요');V.gpaste=txt;V.gparsed=null;V.gmsg='수업 자료의 6개 조 그래프에서 읽은 값이에요. "표 읽기"를 누르세요.';render()},
+  aiPick(el){const i=$(el.dataset.k==='ref'?'#rfile':'#gfile');i.value='';i.click()},
+  aiProv(el){S.aiProv=el.dataset.k;if(V.name==='exp'&&el.dataset.k!=='claude'){const g=G();if(g.source!=='table'){save();return A.gSrc({dataset:{s:'table'}})}}save();render()},
+  stepsPaste(){const d=parseStepsAnswer(V.stepans||'');if(!d)return toast('단계 표를 찾지 못했어요 · 답을 통째로 붙여넣었는지 확인하세요');
+    d.who=(AI_PROV[curProv()]||{}).name||'AI';if(!stepsToDraft(d,''))return toast('단계를 찾지 못했어요');V.draft.who=d.who;V.stepans='';render();window.scrollTo(0,0)},
+  refPaste(){const t=V.refans||'',get=k=>{const m=t.replace(/[*_`#>]/g,'').match(new RegExp('^\\s*-?\\s*'+k+'\\s*[:：]\\s*(.*)$','m'));return m?m[1].trim():''};
+    const r={title:get('제목'),source:get('출처'),link:get('링크'),note:[get('요약'),get('보고값')?'보고값: '+get('보고값'):''].filter(Boolean).join('\n')};
+    if(!r.title&&!r.note)return toast('문헌 정보를 찾지 못했어요 · 답을 통째로 붙여넣었는지 확인하세요');
+    V.gref=r;V.refans='';render();toast('문헌 정보를 채웠어요 · 확인하고 "선행연구 추가"를 누르세요')},
+  expFile(){exportFile('exp')},allFile(){exportFile('all')},
+  impPick(){const i=$('#imp');i.value='';i.click()},
+  async aiCopy(el){const k=el&&el.dataset.k,t=k==='steps'?aiStepsCopyPrompt():k==='ref'?aiRefCopyPrompt(exp()):aiCopyPrompt(exp());let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(_){}
+    if(ok)return toast('지시문을 복사했어요');
+    const d=sheet(`<h3>지시문 복사</h3><p>자동으로 복사하지 못했어요. 아래 글을 길게 눌러 전체 선택한 뒤 복사하세요.</p><textarea class="aiprompt" readonly>${esc(t)}</textarea><div class="row" style="margin-top:12px"><button class="btn black" data-x="no">닫기</button></div>`);
+    d.querySelector('[data-x=no]').onclick=()=>d.remove();const ta=d.querySelector('textarea');ta.focus();ta.select()},
+  aiStop(){if(AIS.ctl)AIS.ctl.abort()},
+  gRead(){const p=parseTable(V.gpaste||'');
+    if(!p||p.header.length<2){V.gparsed=null;V.gmsg='표를 읽지 못했어요. 첫 줄에 열 이름, 둘째 줄부터 값이 있어야 해요.'}
+    else{ // 열 이름이 "조건: …", "결과: …"로 시작하면 그 말로 역할을 정하고 머리말은 떼어 냄
+      const pre={'조건':'cond','결과':'result','메모':'note','이름':'name','조':'rep'},tag=p.header.map(h=>{const m=h.match(/^(조건|결과|메모|이름|조)\s*[:：]\s*(.+)$/);return m?[pre[m[1]],m[2].trim()]:null});
+      if(tag.some(Boolean))p.header=p.header.map((h,i)=>tag[i]?tag[i][1]:h);
+      V.gparsed=p;V.gmsg='';V.gai=null;const saved=(S.colmaps||{})[p.header.join(SEP)],guess=guessRoles(p.header,p.rows);
+      V.groles=tag.some(Boolean)?p.header.map((h,i)=>tag[i]?tag[i][0]:guess[i]):saved&&saved.length===p.header.length?saved.slice():guess;
+      if(!V.groles.includes('result'))V.groles=guess}
+    render()},
+  gImport(){const g=G(),p=V.gparsed,roles=V.groles,cnt=k=>roles.filter(x=>x===k).length;
+    if(cnt('name')>1)return toast('이름 열은 하나만 고를 수 있어요');
+    if(cnt('rep')>1)return toast('반복 번호 열은 하나만 고를 수 있어요');
+    if(!cnt('result'))return toast('결과 열을 하나 이상 골라 주세요');
+    const bad=gApply(g,p,roles);g.source='table';g.preset=false;g.curRes=g.results[0].key;S.colmaps=S.colmaps||{};S.colmaps[p.header.join(SEP)]=roles.slice();
+    V.gparsed=null;V.gpaste='';V.gmsg='';V.gai=null;V.gbase=null;V.gax=0;V.gay=1;V.gfix={};V.gopen={};save();render();window.scrollTo(0,0);
+    toast(`<b>${g.rows.length}건</b>을 가져왔어요`+(bad?` · 숫자가 아닌 칸 ${bad}개는 빈칸`:'')+(g.conds.length?'':' · 조건 열이 없어요'))},
+  // 자료 출처 바꾸기: 바꾸기 전 표는 보관해 두었다가 돌아오면 되살림
+  gSrc(el){const g=G(),to=el.dataset.s;if(g.source===to)return;
+    const keep=['conds','results','repLabel','rows','curRes','plans','preset'],snap=()=>JSON.parse(JSON.stringify(Object.fromEntries(keep.map(k=>[k,g[k]]))));
+    if(to==='steps'){g.tbl=snap();g.source='steps';g.plans=[];g.preset=false}
+    else{g.source='table';Object.assign(g,g.tbl||{conds:[],results:[],repLabel:'',rows:[],curRes:null,plans:[],preset:false})}
+    V.gbase=null;V.gax=0;V.gay=1;V.gfix={};V.gopen={in:true};save();render()},
+  mColAdd(){const st=stepOf(),c={label:$('#mc-label').value.trim(),unit:$('#mc-unit').value.trim()};
+    if(!c.label)return toast('<b>항목 이름</b>을 입력하세요');
+    mEnsure(st);if(st.mcols.some(q=>mKey(q)===mKey(c)))return toast('이미 있는 항목이에요');
+    st.mcols.push(c);save();render();const el=$(`[data-mc="${st.mrows.length?1:0}|${st.mcols.length-1}"]`);if(el)el.focus()},
+  mColDel(el){const st=stepOf(),c=st.mcols[+el.dataset.j];if(!c)return;
+    if(!el.classList.contains('arm')&&st.meas.some(m=>mKey(m)===mKey(c))){el.classList.add('arm');el.style.color='#C2504A';return toast('값이 있어요 · 한 번 더 누르면 항목을 지워요')}
+    st.meas=st.meas.filter(m=>mKey(m)!==mKey(c));st.mcols=st.mcols.filter(q=>q!==c&&!(q.calc&&(q.calc.a===mKey(c)||q.calc.b===mKey(c))));save();render()},
+  mRowDel(el){const st=stepOf(),n=st.mrows[+el.dataset.i];if(n===undefined)return;
+    if(!el.classList.contains('arm')&&st.meas.some(m=>m.sample===n)){el.classList.add('arm');el.style.color='#C2504A';return toast('값이 있어요 · 한 번 더 누르면 줄을 지워요')}
+    st.meas=st.meas.filter(m=>m.sample!==n);st.mrows=st.mrows.filter(q=>q!==n);save();render()},
+  mRowsPull(){const e=exp(),st=stepOf();mEnsure(st);[...new Set(e.steps.flatMap(q=>(q.mrows||[]).concat((q.meas||[]).map(m=>m.sample))))].filter(Boolean).forEach(n=>{if(!st.mrows.includes(n))st.mrows.push(n)});save();render();toast('다른 단계의 시료를 불러왔어요')},
+  mCalcToggle(){V.mcalc=!V.mcalc;render()},
+  mYield(){const st=stepOf(),pr=mYieldPair(st);if(!pr)return;st.mcols.push({label:'수득률',unit:'%',calc:{a:mKey(pr[0]),op:'÷',b:mKey(pr[1]),k:100}});save();render();toast('<b>수득률</b> = 실제 ÷ 이론 × 100 을 추가했어요')},
+  mCalcAdd(){const st=stepOf(),c={label:$('#mk-label').value.trim(),unit:$('#mk-unit').value.trim(),calc:{a:$('#mk-a').value,op:$('#mk-op').value,b:$('#mk-b').value,k:+$('#mk-k').value}};
+    if(!c.label)return toast('<b>새 항목 이름</b>을 입력하세요');
+    if(st.mcols.some(q=>mKey(q)===mKey(c)))return toast('이미 있는 항목이에요');
+    st.mcols.push(c);V.mcalc=false;save();render();toast(`<b>${esc(c.label)}</b>을 계산했어요`)},
+  mPick(el){const st=stepOf(),q=(V.msug||[])[+el.dataset.i];if(!q)return;mEnsure(st);const c={label:q.label,unit:q.unit};
+    if(!st.mcols.some(k=>mKey(k)===mKey(c)))st.mcols.push(c);mSet(st,'',c,q.value);save();render()},
+  gAdd(){const g=G(),x={id:uid(),name:$('#ga-name').value.trim()||'실험 '+(g.rows.length+1),rep:g.repLabel?$('#ga-rep').value.trim():'',cond:{},res:{},miss:{},note:$('#ga-note').value.trim()};
+    for(const c of g.conds){x.cond[c.key]=$('#ga-'+c.key).value.trim();if(!x.cond[c.key])return toast(`<b>${esc(c.label)}</b> 값을 입력하세요`)}
+    for(const r of g.results){const c=parseCell($('#ga-'+r.key).value);if(c.bad)return toast(`<b>${esc(r.label)}</b>에는 숫자나 "없음"을 입력하세요`);x.res[r.key]=c.v;if(c.miss)x.miss[r.key]=c.miss;if(c.dp)r.dp=Math.min(4,Math.max(r.dp,c.dp))}
+    g.rows.push(x);save();render();toast(`추가했어요 · <b>${esc(x.name)}</b>`)},
+  gDel(el){const g=G();g.rows=g.rows.filter(x=>x.id!==el.dataset.id);save();render()},
+  async gExport(){const g=G(),e=exp();if(!g.rows.length)return toast('내보낼 기록이 없어요');
+    const q=v=>`"${String(v??'').replace(/"/g,'""')}"`,head=['이름'].concat(g.repLabel?[g.repLabel]:[],g.conds.map(c=>c.label),g.results.map(r=>r.label),['메모']);
+    const lines=[head.map(q).join(',')].concat(g.rows.map(x=>[x.name].concat(g.repLabel?[x.rep]:[],g.conds.map(c=>x.cond[c.key]),g.results.map(r=>gCell(x,r)),[x.note]).map(q).join(',')));
+    await saveBlob(`${e.no}_${e.title}_조건비교.csv`.replace(/[\\/:*?"<>|]/g,''),new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv'}),'CSV를 저장했어요')},
+  gClear(){const d=sheet(`<h3>붙여넣은 표를 비울까요?</h3><p>열 설정, 기록, 실험 계획이 지워져요. 목적·가설과 선행연구 메모는 남아요.</p><div class="row"><button class="btn ghost" data-x="no">취소</button><button class="btn black" data-x="yes">비우기</button></div>`);
+    d.querySelector('[data-x=no]').onclick=()=>d.remove();d.querySelector('[data-x=yes]').onclick=()=>{d.remove();const g=G();Object.assign(g,{conds:[],results:[],repLabel:'',rows:[],plans:[],curRes:null,preset:false});g.refs.forEach(x=>{x.cond=null;x.rkey=null;x.value=null});V.gopen={in:true};save();render()}},
+  gExAdd(){const g=G(),c=g.conds[+$('#gx-cond').value],v=$('#gx-val').value.trim();if(!c||!v)return;gAddExtra(g,c,v);save();render()},
+  gExRm(el){const g=G(),c=g.conds[+el.dataset.i];c.extra=(c.extra||[]).filter(v=>v!==el.dataset.v);save();render()},
+  gPlan(){const g=G(),p={id:uid(),cond:{},note:$('#gp-note').value.trim()};
+    for(const c of g.conds){p.cond[c.key]=$('#gp-'+c.key).value.trim();if(!p.cond[c.key])return toast(`<b>${esc(c.label)}</b> 값을 입력하세요`)}
+    if(g.plans.some(x=>gKey(g,x)===gKey(g,p)))return toast('이미 계획에 있는 조합이에요');
+    g.conds.forEach(c=>gAddExtra(g,c,p.cond[c.key]));g.plans.push(p);save();render();toast('계획에 추가했어요 · 조합 지도에 표시돼요')},
+  gPlanTop(el){const g=G(),q=(V.gtop||[])[+el.dataset.i];if(!q)return;const p={id:uid(),cond:{},note:'다음 실험 후보에서 추가'};g.conds.forEach((c,i)=>p.cond[c.key]=q.vals[i]);g.plans.push(p);save();render();toast('계획에 추가했어요')},
+  gPlanDel(el){const g=G();g.plans=g.plans.filter(x=>x.id!==el.dataset.id);save();render()},
+  gRef(){const g=G(),x={id:uid(),title:$('#gr-title').value.trim(),source:$('#gr-source').value.trim(),link:$('#gr-link').value.trim(),note:$('#gr-note').value.trim(),cond:null,rkey:null,value:null};
+    if(!x.title)return toast('제목을 입력하세요');
+    if(g.conds.length){const cv=g.conds.map(c=>$('#gr-'+c.key).value.trim()),val=$('#gr-value').value.trim(),filled=cv.filter(Boolean).length+(val?1:0);
+      if(filled){const n=parseCell(val);if(filled<g.conds.length+1||n.v===null)return toast('조건과 보고된 값을 모두 채우거나 모두 비워 두세요');
+        x.cond={};g.conds.forEach((c,i)=>{x.cond[c.key]=cv[i];gAddExtra(g,c,cv[i])});x.rkey=$('#gr-rkey').value;x.value=n.v}}
+    g.refs.push(x);V.gref=null;save();render();toast('선행연구를 추가했어요')},
+  gRefDel(el){const g=G();g.refs=g.refs.filter(x=>x.id!==el.dataset.id);save();render()}
+});
+// 결과 분석 화면의 선택 상자와 입력칸
+document.addEventListener('change',ev=>{const t=ev.target,k=t.dataset.g;if(!k)return;const g=G();
+  if(k==='role'){V.groles[+t.dataset.i]=t.value;return}
+  if(k==='mrole'){g.mroles=g.mroles||{};g.mroles[t.dataset.h]=t.value;save();render();return}
+  if(k==='curRes'){g.curRes=t.value;save()}
+  else if(k==='base')V.gbase=t.value;
+  else if(k==='ax'){V.gax=+t.value;if(V.gax===V.gay)V.gay=(V.gax+1)%g.conds.length}
+  else if(k==='ay'){V.gay=+t.value;if(V.gax===V.gay)V.gax=(V.gay+1)%g.conds.length}
+  else if(k==='fix')V.gfix[t.dataset.k]=t.value;
+  else if(k==='better'){g.better=t.value;save()}
+  render()});
+document.addEventListener('input',ev=>{const t=ev.target,k=t.dataset.gi;if(!k)return;
+  if(k==='paste')V.gpaste=t.value;else if(k==='pages')V.gpages=t.value;else if(k==='goal'){G().goal=t.value;save()}});
+document.addEventListener('input',ev=>{const k=ev.target.dataset.rp;if(!k)return;RP()[k]=ev.target.value;save()});
+document.addEventListener('input',ev=>{const t=ev.target;if(!t.dataset.mc)return;const st=stepOf(),[i,j]=t.dataset.mc.split('|').map(Number),c=st.mcols[j];if(!c||c.calc)return;
+  mSet(st,i===0?'':st.mrows[i-1],c,t.value.trim());mRecalc(st).forEach(([a,b,v])=>{const el=$(`[data-mc="${a}|${b}"]`);if(el)el.value=v});
+  const cn=$('#mcount');if(cn)cn.textContent=`측정값 ${st.meas.length}개`;save()});
+// 메모를 고치고 나면 "메모에서 찾은 숫자"만 새로 고침
+document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.memo===undefined&&t.dataset.obs===undefined)return;const el=$('#msug');if(el&&V.name==='step')el.innerHTML=mSugHTML(stepOf())});
+document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.mr===undefined)return;const st=stepOf(),name=t.value.trim();mEnsure(st);
+  if(t.dataset.mr==='new'){if(!name)return;if(st.mrows.includes(name)){t.value='';return toast('이미 있는 시료예요')}st.mrows.push(name);save();render();const el=$(`[data-mc="${st.mrows.length}|0"]`);if(el)el.focus();return}
+  const old=st.mrows[+t.dataset.mr];if(!name||name===old){t.value=old;return}
+  if(st.mrows.includes(name)){t.value=old;return toast('이미 있는 시료예요')}
+  st.mrows[+t.dataset.mr]=name;st.meas.forEach(m=>{if(m.sample===old)m.sample=name});save();render()});
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+  const el=ev.target.closest('[data-a]');if(!el||el.disabled)return;
+  const f=A[el.dataset.a];if(f){ev.preventDefault();f(el,ev)}
+});
+document.addEventListener('input',ev=>{
+  const t=ev.target;
+  if(t.dataset.memo!==undefined){const p=stepOf().photos.find(x=>x.id===t.dataset.memo);if(p){p.memo=t.value;save()}}
+  if(t.dataset.obs!==undefined){const s=stepOf();s.obs={text:t.value,by:ME,at:Date.now()};save();const b=$('#obsby');if(b)b.textContent=`마지막 작성 · ${ME} · ${fmt(s.obs.at)}`}
+});
+$('#cam').addEventListener('change',e=>{const f=[...e.target.files];if(f.length&&pending)addPhotos(f,pending.sid)});
+$('#gal').addEventListener('change',e=>{const f=[...e.target.files];if(f.length&&pending)addPhotos(f,pending.sid)});
+$('#doc').addEventListener('change',e=>{const f=[...e.target.files];if(f.length)aiSteps(f)});
+document.addEventListener('input',ev=>{const k=ev.target.dataset.d;if(!k)return;if(k==='stepans')V.stepans=ev.target.value;else if(k==='refans')V.refans=ev.target.value;else if(V.draft)V.draft[k]=ev.target.value});
+$('#gfile').addEventListener('change',e=>{const f=[...e.target.files];if(f.length)aiRun(f,'table')});
+$('#rfile').addEventListener('change',e=>{const f=[...e.target.files];if(f.length)aiRun(f,'ref')});
+$('#imp').addEventListener('change',e=>{const f=e.target.files[0];if(f)importFile(f)});
+
+/* ---------- PDF ---------- */
+function wrap(x,text,maxW){
+  const lines=[];String(text||'').split('\n').forEach(par=>{let cur='';for(const ch of par){const t=cur+ch;if(x.measureText(t).width>maxW&&cur){
+    // 영어 단어 중간 끊김 줄이기
+    const sp=cur.lastIndexOf(' ');if(sp>cur.length-12&&sp>0&&/[A-Za-z0-9]/.test(ch)){lines.push(cur.slice(0,sp));cur=cur.slice(sp+1)+ch}else{lines.push(cur);cur=ch.trim()?ch:''}}else cur=t}lines.push(cur)});
+  return lines;
+}
+async function imgEl(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
+/* ---------- 사진 다듬기: 자르기 · 돌리기 ----------
+   남길 부분을 상자로 정하고 "적용"을 누르면 그 부분만 남김. 처음 사진은 p.orig에 보관해 "원본으로"로 되돌릴 수 있음 */
+function cropOpen(s,p){
+  const d=document.createElement('div');d.className='crop';
+  d.innerHTML=`<div class="cbar"><button data-c="cancel">취소</button><b>사진 다듬기</b><button data-c="ok" class="ok">적용</button></div>
+   <div class="cstage"><div class="cwrap"><img alt=""><div class="cbox"><i class="h nw"></i><i class="h ne"></i><i class="h sw"></i><i class="h se"></i></div></div></div>
+   <div class="cbar bot"><button data-c="rot">↺ 왼쪽으로 돌리기</button><button data-c="all">전체 선택</button>${p.orig?'<button data-c="orig">원본으로</button>':''}</div>
+   <div class="chint">모서리를 끌어 남길 부분을 정하세요. 상자 안쪽을 끌면 상자가 움직여요.</div>`;
+  document.body.appendChild(d);
+  const img=d.querySelector('img'),wrap=d.querySelector('.cwrap'),box=d.querySelector('.cbox');
+  let work=document.createElement('canvas'),turned=false,restored=false,R={x:0,y:0,w:1,h:1}; // R = 남길 부분 (사진 크기에 대한 비율 0~1)
+  const place=()=>{box.style.left=R.x*100+'%';box.style.top=R.y*100+'%';box.style.width=R.w*100+'%';box.style.height=R.h*100+'%'};
+  const show=()=>{img.src=work.toDataURL('image/jpeg',.9);R={x:0,y:0,w:1,h:1};place()};
+  const loadSrc=async src=>{const im=await imgEl(src);if(!im)return;work.width=im.naturalWidth;work.height=im.naturalHeight;work.getContext('2d').drawImage(im,0,0);show()};
+  loadSrc(p.src);
+  // 끌기: 모서리는 크기 조절, 상자 안쪽은 이동
+  let drag=null;
+  box.addEventListener('pointerdown',ev=>{ev.preventDefault();const b=wrap.getBoundingClientRect();
+    drag={mode:ev.target.classList.contains('h')?ev.target.className.replace('h','').trim():'move',x0:ev.clientX,y0:ev.clientY,o:{...R},W:b.width,H:b.height};
+    try{box.setPointerCapture(ev.pointerId)}catch(_){}});
+  box.addEventListener('pointermove',ev=>{if(!drag)return;const o=drag.o,dx=(ev.clientX-drag.x0)/drag.W,dy=(ev.clientY-drag.y0)/drag.H,mw=Math.min(.5,44/drag.W),mh=Math.min(.5,44/drag.H);
+    let {x,y,w,h}=o;
+    if(drag.mode==='move'){x=Math.max(0,Math.min(1-w,o.x+dx));y=Math.max(0,Math.min(1-h,o.y+dy))}
+    else{
+      if(drag.mode.includes('w')){x=Math.max(0,Math.min(o.x+o.w-mw,o.x+dx));w=o.x+o.w-x}
+      if(drag.mode.includes('e'))w=Math.max(mw,Math.min(1-o.x,o.w+dx));
+      if(drag.mode.includes('n')){y=Math.max(0,Math.min(o.y+o.h-mh,o.y+dy));h=o.y+o.h-y}
+      if(drag.mode.includes('s'))h=Math.max(mh,Math.min(1-o.y,o.h+dy));
+    }
+    R={x,y,w,h};place()});
+  const end=()=>{drag=null};box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
+  d.addEventListener('click',async ev=>{const c=ev.target.dataset.c;if(!c)return;
+    if(c==='cancel')d.remove();
+    else if(c==='all'){R={x:0,y:0,w:1,h:1};place()}
+    else if(c==='rot'){ // 왼쪽으로 90도
+      const n=document.createElement('canvas');n.width=work.height;n.height=work.width;const x=n.getContext('2d');x.translate(0,n.height);x.rotate(-Math.PI/2);x.drawImage(work,0,0);work=n;turned=true;show()}
+    else if(c==='orig'){await loadSrc(p.orig);restored=true;turned=false}
+    else if(c==='ok'){
+      const full=R.x<.005&&R.y<.005&&R.w>.99&&R.h>.99;
+      if(full&&!turned&&!restored){d.remove();return} // 바꾼 것이 없음
+      if(full&&!turned&&restored){p.src=p.orig;delete p.orig} // 원본으로 되돌리기만 함
+      else{const sx=Math.round(R.x*work.width),sy=Math.round(R.y*work.height),sw=Math.max(1,Math.round(R.w*work.width)),sh=Math.max(1,Math.round(R.h*work.height));
+        const o=document.createElement('canvas');o.width=sw;o.height=sh;o.getContext('2d').drawImage(work,sx,sy,sw,sh,0,0,sw,sh);
+        if(!p.orig)p.orig=p.src;p.src=o.toDataURL('image/jpeg',.86)}
+      save();d.remove();render();toast('사진을 다듬었어요')}
+  });
+}
+async function makePDF(btn){
+  // 순서: 실험 제목 → 목적 → 원리 → 방법 → 결과(단계별 기록, 그래프·요약표) → 결론 → 고찰
+  const e=exp(),rp=RP();gSync(e);let g=e.gap&&e.gap.rows.length?e.gap:null;
+  if(!window.jspdf){toast('PDF 도구를 불러오지 못했어요 · 새로고침 후 다시');return}
+  btn.disabled=true;const old=btn.innerHTML;btn.innerHTML='PDF 만드는 중…';
+  try{
+    try{await document.fonts.ready}catch(_){}
+    const W=1240,H=1754,M=96,CW=W-M*2,BOT=H-M-30,pages=[];let c,x,y;
+    const F='"Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',FM=F,FT=F; // 보고서는 본문 글꼴 하나로 차분하게
+    const newPage=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+      x.fillStyle='#252B3B';x.font=`600 18px ${FM}`;x.fillText('LABSTEP · 실험 보고서',M,62);
+      x.textAlign='right';x.fillText(`${e.no} ${e.title}`,W-M,62);x.textAlign='left';
+      x.fillRect(M,76,CW,2);pages.push(c);y=120};
+    const need=h=>{if(y+h>BOT)newPage()};
+    const text=(t,font,color,lh,maxW=CW,xx=M)=>{x.font=font;wrap(x,t,maxW).forEach(l=>{need(lh);x.font=font;x.fillStyle=color;x.fillText(l,xx,y+lh*.78);y+=lh})};
+    const fit=(t,cx,yy,maxW)=>{let v=String(t??'');if(x.measureText(v).width>maxW){while(v.length>1&&x.measureText(v+'…').width>maxW)v=v.slice(0,-1);v+='…'}x.textAlign='center';x.fillText(v,cx,yy);x.textAlign='left'};
+    // 큰 제목(1~7), 작은 제목, 본문
+    const h1=(no,t)=>{need(170);y+=14;x.fillStyle='#252B3B';x.fillRect(M,y,CW,3);y+=22;x.fillStyle='#5266E0';x.font=`600 28px ${FM}`;x.fillText(no,M,y+30);x.fillStyle='#252B3B';x.font=`700 33px ${FT}`;x.fillText(t,M+52,y+31);y+=64};
+    const h2=t=>{need(130);y+=6;x.fillStyle='#252B3B';x.font=`700 25px ${F}`;x.fillText(t,M,y+26);y+=38;x.fillStyle='#E7E9F1';x.fillRect(M,y,CW,2);y+=20};
+    const para=(t,none='(작성하지 않음)')=>{String(t||'').trim()?text(t,`400 24px ${F}`,'#252B3B',40):text(none,`400 23px ${F}`,'#9A9A96',38);y+=12};
+    // 표: 바깥 세로선 없음, 위·머리줄 아래·맨 아래는 굵은 선, 가운데 정렬
+    const table=(head,rows)=>{
+      x.font=`400 21px ${F}`;let w=head.map((h,i)=>Math.max(x.measureText(h).width,...rows.map(r=>x.measureText(String(r[i]??'')).width))+30);
+      const sum=w.reduce((p,q)=>p+q,0);if(sum>CW)w=w.map(v=>v*CW/sum);const tw=Math.min(CW,sum),rh=44;
+      const lines=(top)=>{x.fillStyle='#CFCFCB';let xx=M;w.slice(0,-1).forEach(v=>{xx+=v;x.fillRect(xx,top,1,rh)})};
+      const head1=()=>{need(rh*2+10);x.fillStyle='#252B3B';x.fillRect(M,y,tw,3);lines(y);x.font=`700 20px ${F}`;x.fillStyle='#252B3B';let xx=M;head.forEach((h,i)=>{fit(h,xx+w[i]/2,y+30,w[i]-14);xx+=w[i]});x.fillRect(M,y+rh-2,tw,3);y+=rh};
+      head1();
+      rows.forEach(r=>{if(y+rh>BOT){x.fillStyle='#252B3B';x.fillRect(M,y-1,tw,3);newPage();head1()}lines(y);x.font=`400 21px ${F}`;x.fillStyle='#252B3B';let xx=M;r.forEach((v,i)=>{fit(v,xx+w[i]/2,y+30,w[i]-14);xx+=w[i]});x.fillStyle='#E7E9F1';x.fillRect(M,y+rh-1,tw,1);y+=rh});
+      x.fillStyle='#252B3B';x.fillRect(M,y-2,tw,3);y+=26;
+    };
+    // 그래프: 화면의 그래프와 같은 규칙. o = {x0, w, h, title, adv} (작은 그래프를 두 개씩 나란히 그릴 때도 씀)
+    const chart=(r,o={})=>{const m=gChart(g,r);if(!m)return;const x0=o.x0??M,w=o.w??CW,CH=o.h??450,small=w<CW,L=small?78:96,T=o.title?56:16,B=small?64:92,n=m.rows.length,gw=Math.min(150,(w-L-16)/n),ph=CH-T-B,pw=n*gw+12,k0=small?.8:1;
+      if(o.adv!==false)need(CH+70);
+      const Y=v=>y+T+ph*(1-(v-m.y0)/(m.y1-m.y0));
+      if(o.title){x.fillStyle='#252B3B';x.font=`700 22px ${F}`;let t=o.title;if(x.measureText(t).width>w-8){while(t.length>1&&x.measureText(t+'…').width>w-8)t=t.slice(0,-1);t+='…'}x.fillText(t,x0,y+28)}
+      x.font=`500 ${small?16:19}px ${FM}`;m.ticks.forEach(t=>{x.fillStyle='#E7E9F1';x.fillRect(x0+L,Y(t),pw,1);x.fillStyle='#687083';x.textAlign='right';x.fillText(t.toFixed(m.dp),x0+L-12,Y(t)+6);x.textAlign='left'});
+      x.fillStyle='#252B3B';x.fillRect(x0+L,y+T,2,ph);x.fillRect(x0+L,y+T+ph,pw,2);
+      m.rows.forEach((q,i)=>{const cx=x0+L+gw*(i+.5),k=q.pts.length;
+        x.fillStyle='#5266E0';x.fillRect(cx-24*k0,Y(q.st.mean)-3,48*k0,6);
+        if(q.st.sd!=null){x.fillStyle='#252B3B';const a=Y(q.st.mean+q.st.sd),b=Y(q.st.mean-q.st.sd);x.fillRect(cx-1,a,2,b-a);x.fillRect(cx-10,a,20,2);x.fillRect(cx-10,b,20,2)}
+        q.pts.forEach((pt,j)=>{const dx=Math.max(-32,Math.min(32,(j-(k-1)/2)*13)),bad=m.flags.has(pt.id);x.beginPath();x.arc(cx+dx,Y(pt.v),6.5*k0,0,Math.PI*2);x.fillStyle=bad?'#C2504A':'#fff';x.fill();x.lineWidth=2.5;x.strokeStyle=bad?'#C2504A':'#252B3B';x.stroke()});
+        x.fillStyle='#252B3B';x.font=`500 ${small?15:19}px ${F}`;fit(q.vals.join(' · ')||'전체',cx,y+T+ph+30,gw-6)});
+      if(!small){x.fillStyle='#687083';x.font=`400 20px ${F}`;fit(g.conds.map(q=>q.label).join(' · '),x0+L+pw/2,y+T+ph+72,pw)}
+      if(o.adv!==false){y+=CH;text('점: 측정값 하나 · 주황 선: 평균 · 세로 막대: 평균 ± 표준편차 · 빨간 점: 확인이 필요한 값',`400 19px ${F}`,'#687083',32);y+=16}};
+
+    // 조합 지도: 조건이 1~2개일 때만 그림
+    const mapGrid=r=>{if(!g.conds.length||g.conds.length>2)return false;let X=g.conds[0],Yc=g.conds[1]||null;if(Yc&&gVals(g,Yc).length>gVals(g,X).length)[X,Yc]=[Yc,X];
+      const xs=gVals(g,X),ys=Yc?gVals(g,Yc):[null],gm=gGroups(g),plan=new Set(g.plans.map(p=>gKey(g,p)).filter(k=>!gm.has(k)));
+      const lw=Yc?190:0,cw=Math.min(200,(CW-lw)/xs.length),rh=94,hh=44,tw=lw+cw*xs.length;need(hh*2+rh*Math.min(ys.length,3)+40);
+      x.fillStyle='#252B3B';x.fillRect(M,y,tw,3);x.font=`700 20px ${F}`;fit(X.label+' →',M+lw+cw*xs.length/2,y+30,cw*xs.length-10);if(Yc)fit(Yc.label+' ↓',M+lw/2,y+hh+30,lw-12);
+      x.font=`600 20px ${FM}`;xs.forEach((v,i)=>fit(v,M+lw+cw*(i+.5),y+hh+30,cw-10));x.fillRect(M,y+hh*2-2,tw,3);y+=hh*2;
+      ys.forEach(yv=>{if(y+rh>BOT){newPage()}
+        if(Yc){x.font=`600 21px ${FM}`;x.fillStyle='#252B3B';fit(yv,M+lw/2,y+rh/2+8,lw-12)}
+        xs.forEach((xv,i)=>{const key=g.conds.map(q=>q===X?xv:yv).join(SEP),list=gm.get(key),cx=M+lw+cw*i;
+          if(!list){const pl=plan.has(key);
+            if(pl){x.fillStyle='#5266E0';x.fillRect(cx+1,y+1,cw-2,rh-2)}
+            else{x.save();x.beginPath();x.rect(cx+1,y+1,cw-2,rh-2);x.clip();x.strokeStyle='#DADFF8';x.lineWidth=7;for(let d=-rh;d<cw;d+=20){x.beginPath();x.moveTo(cx+d,y+rh);x.lineTo(cx+d+rh,y);x.stroke()}x.restore()}
+            x.fillStyle='#252B3B';x.font=`700 22px ${F}`;fit(pl?'계획됨':'미실행',cx+cw/2,y+rh/2+8,cw-10)}
+          else{const st=gStat(list,r);x.fillStyle='#252B3B';x.font=`600 27px ${FM}`;fit(st.n?(st.n>1?fm(st.mean,r):fv(st.mean,r)):(st.none?'없음':'–'),cx+cw/2,y+42,cw-10);
+            x.font=`400 19px ${F}`;x.fillStyle='#687083';fit(st.n>1?`± ${fm(st.sd,r)} · ${st.n}회`:`${list.length}회`,cx+cw/2,y+72,cw-10)}
+          x.fillStyle='#CFCFCB';x.fillRect(cx,y,1,rh)});
+        x.fillStyle='#E7E9F1';x.fillRect(M,y+rh-1,tw,1);y+=rh});
+      x.fillStyle='#252B3B';x.fillRect(M,y-2,tw,3);y+=26;return true};
+
+    newPage();
+    // 표지 블록
+    x.fillStyle='#5266E0';x.fillRect(M,y,14,120);
+    x.fillStyle='#252B3B';x.font=`600 22px ${FM}`;x.fillText(`${e.course} · ${e.no}`.toUpperCase(),M+36,y+30);
+    x.font=`700 50px ${FT}`;{let t=e.title;if(x.measureText(t).width>CW-40){while(t.length>1&&x.measureText(t+'…').width>CW-40)t=t.slice(0,-1);t+='…'}x.fillText(t,M+36,y+96)}y+=160;
+    const ph=e.steps.reduce((p,q)=>p+q.photos.length,0);
+    text(`팀  ${team().name}   ·   기록일  ${fmtDate(e.created)}   ·   사진  ${ph}장`,`400 24px ${F}`,'#333',38);
+    text(`기록한 사람  ${people(team()).map(m=>m.name).join(', ')}`,`400 24px ${F}`,'#333',38);y+=10;
+
+    h1('1','실험 제목');para(`${e.no}. ${e.title}`);
+    h1('2','실험 목적');para(rp.goal);
+    if(e.gap&&e.gap.goal.trim()){h2('가설');para(e.gap.goal)}
+    h1('3','실험 원리');para(rp.theory);
+    h1('4','실험 방법');
+    let sec=null;
+    e.steps.forEach((s,i)=>{
+      if(s.section!==sec){sec=s.section;h2(sec)}
+      need(90);x.fillStyle='#5266E0';x.font=`600 24px ${FM}`;x.fillText(pad2(i+1),M,y+26);x.fillStyle='#252B3B';x.font=`700 25px ${F}`;x.fillText(s.title,M+52,y+26);y+=40;
+      if(s.detail.trim())text(s.detail,`400 23px ${F}`,'#333',36,CW-52,M+52);y+=14});
+
+    h1('5','실험 결과');
+    const rec=e.steps.filter(s=>s.photos.length||s.obs.text||(s.meas||[]).length);
+    need(rec.length&&rec[0].photos.length?820:320);h2('5-1 단계별 기록'); // 제목만 쪽 끝에 남지 않게
+    if(!rec.length)para('','(사진과 관찰 메모가 없음)');
+    const colW=(CW-52-28)/2;
+    for(const s of rec){
+      need(s.photos.length?700:s.obs.text?200:120);x.fillStyle='#5266E0';x.font=`600 24px ${FM}`;x.fillText(pad2(e.steps.indexOf(s)+1),M,y+26);x.fillStyle='#252B3B';x.font=`700 25px ${F}`;x.fillText(s.title,M+52,y+26);y+=46;
+      for(let k=0;k<s.photos.length;k+=2){
+        const row=s.photos.slice(k,k+2),ims=await Promise.all(row.map(p=>imgEl(p.src)));
+        const hs=ims.map(im=>im?Math.min(colW*im.naturalHeight/im.naturalWidth,440):200);
+        const capH=row.map(p=>{x.font=`400 21px ${F}`;return 34+(p.memo?wrap(x,p.memo,colW).length*32:0)});
+        const rowH=Math.max(...hs)+Math.max(...capH)+30;need(rowH);
+        row.forEach((p,j)=>{const xx=M+52+j*(colW+28),im=ims[j];
+          if(im){x.drawImage(im,xx,y,colW,hs[j]);x.strokeStyle='#252B3B';x.lineWidth=2;x.strokeRect(xx,y,colW,hs[j])}
+          let yy=y+hs[j]+30;x.font=`600 20px ${FM}`;x.fillStyle='#687083';x.fillText(`촬영 ${p.by} · ${fmt(p.at)}`,xx,yy);yy+=8;
+          if(p.memo){x.font=`400 21px ${F}`;x.fillStyle='#252B3B';wrap(x,p.memo,colW).forEach(l=>{yy+=32;x.fillText(l,xx,yy)})}});
+        y+=rowH;
+      }
+      if((s.meas||[]).length){const mt=measMini(s);need(60+44*Math.min(mt.rows.length+1,4));text('측정값',`700 21px ${F}`,'#252B3B',36,CW-52,M+52);y+=4;table(mt.head,mt.rows)}
+      if(s.obs.text){
+        x.font=`400 23px ${F}`;const L=wrap(x,s.obs.text,CW-52-40),h=L.length*36+64;need(h);
+        x.fillStyle='#EEF0FD';x.fillRect(M+52,y,CW-52,h);x.fillStyle='#5266E0';x.fillRect(M+52,y,6,h);
+        x.fillStyle='#252B3B';x.font=`700 21px ${F}`;x.fillText(`관찰 메모 · ${s.obs.by}`,M+78,y+34);
+        x.font=`400 23px ${F}`;L.forEach((l,j)=>x.fillText(l,M+78,y+72+j*36));y+=h+10;
+      }
+      y+=20;
+    }
+    let hk=1;const hn=t=>`5-${++hk} ${t}`;
+    const resBlock=pre=>{
+      const single=[...gGroups(g).values()].every(l=>l.length<=1);
+      if(single){
+        // 반복 측정이 없을 때: 결과를 표 하나에 모으고, 그래프는 작게 두 개씩 나란히 (쪽 수를 줄임)
+        need(260);h2(hn(pre+'결과 표'));
+        const cl=g.bySample?[]:g.conds;
+        table(['시료'].concat(cl.map(q=>q.label),g.results.map(r=>r.label)),g.rows.map(q=>[q.name].concat(cl.map(c=>q.cond[c.key]),g.results.map(r=>gCell(q,r)))));
+        const notes=g.rows.filter(q=>q.note);if(notes.length){notes.forEach(q=>text(`${q.name}: ${q.note}`,`400 21px ${F}`,'#333',34));y+=10}
+        const cs=g.results.filter(r=>gChart(g,r));
+        if(cs.length){const gapW=44,w=(CW-gapW)/2,CH=390;need(CH+120);h2(hn(pre+'그래프'));
+          for(let i=0;i<cs.length;i+=2){need(CH+16);chart(cs[i],{x0:M,w,h:CH,title:cs[i].label,adv:false});if(cs[i+1])chart(cs[i+1],{x0:M+w+gapW,w,h:CH,title:cs[i+1].label,adv:false});y+=CH+18}
+          text('점: 측정값 · 주황 선: 그 값 · 가로축: '+(g.conds.map(q=>q.label).join(' · ')||'전체'),`400 19px ${F}`,'#687083',32);y+=14}
+        // 조건(또는 시료)에 따른 변화: 결과마다 한 열
+        if(!g.bySample||g.rows.length===2){const rows=[],anyO=g.conds.length>1;
+          g.results.forEach(r=>gKeyEffects(g,r).forEach(q=>{const n=Math.max(q.nA,q.nB),d=`${q.delta>0?'+':q.delta<0?'−':''}${fx(Math.abs(q.delta),r,n)}`;
+            rows.push(g.bySample?[r.label,fx(q.meanA,r,q.nA),fx(q.meanB,r,q.nB),fx(Math.abs(q.delta),r,n)]:[r.label,`${q.cond.label} ${q.from} → ${q.to}`].concat(anyO?[q.others]:[],[`${fx(q.meanA,r,q.nA)} → ${fx(q.meanB,r,q.nB)}`,d]))}));
+          if(!g.bySample)g.results.forEach(r=>gTied(g,r).forEach(q=>{const n=Math.max(q.nA,q.nB);rows.push([r.label,`${q.cond.label} ${q.from} → ${q.to}`].concat(anyO?['함께 바뀜: '+q.also.map(o=>o.label).join(', ')]:[],[`${fx(q.meanA,r,q.nA)} → ${fx(q.meanB,r,q.nB)}`,`${q.delta>0?'+':q.delta<0?'−':''}${fx(Math.abs(q.delta),r,n)}`]))}));
+          if(rows.length){need(240);h2(hn(pre+(g.bySample?'두 시료의 차이':'조건에 따른 변화')));
+            table(g.bySample?['항목',g.rows[0].name,g.rows[1].name,'차이']:['항목','바꾼 것'].concat(anyO?['나머지 조건']:[],['값의 변화','차이']),rows)}}
+        if(!g.bySample&&g.conds.length<=2){need(360);text('조건 조합 지도 (빗금: 미실행, 주황: 계획됨)',`700 22px ${F}`,'#252B3B',40);y+=6;mapGrid(gRes(g))}
+      }else g.results.forEach((r,ri)=>{
+        need(700);h2(hn(pre+r.label));chart(r); // 제목과 그래프가 다른 쪽으로 갈라지지 않게
+        const rows=gSummary(g,r);
+        table((g.conds.length?g.conds.map(q=>q.label):['조건']).concat(['횟수','평균','표준편차','CV %','최소 – 최대']),
+          rows.map(q=>{const cv=gCV(q.st);return (g.conds.length?q.vals:['전체']).concat([q.st.n+(q.st.none?` (없음 ${q.st.none})`:''),q.st.n?(q.st.n>1?fm(q.st.mean,r):fv(q.st.mean,r)):'',q.st.sd!=null?fm(q.st.sd,r):'',cv!=null?cv.toFixed(1):'',q.st.n?fv(q.min,r)+' – '+fv(q.max,r):''])}));
+        const eff=gEffects(g,r);
+        if(eff.length){const anyP=eff.some(q=>q.paired),anyO=g.conds.length>1;
+          need(220);text('조건을 바꿨을 때의 분류 (평균 차이를 두 묶음의 표준편차와 비교)',`700 22px ${F}`,'#252B3B',40);y+=6;
+          table(['바꾼 조건','값'].concat(anyO?['나머지 조건']:[],['평균','분류'],anyP?[`같은 ${g.repLabel||'반복'}끼리`]:[]),
+            eff.slice(0,14).map(q=>[q.cond.label,`${q.from} → ${q.to}`].concat(anyO?[q.others]:[],[`${fm(q.meanA,r)} → ${fm(q.meanB,r)}`,gVerdict(q)],anyP?[q.paired?`${q.paired.n}쌍 중 증가 ${q.paired.up}, 감소 ${q.paired.down}`:'']:[])));
+          if(eff.length>14)text(`전체 ${eff.length}건 중 14건만 실음`,`400 19px ${F}`,'#687083',30)}
+        if(ri===0&&g.conds.length<=2&&!g.bySample){need(360);text('조건 조합 지도 (빗금: 미실행, 주황: 계획됨)',`700 22px ${F}`,'#252B3B',40);y+=6;mapGrid(r)}
+      });
+    };
+    const sets=e.gap&&e.gap.source==='steps'?measSets(e):[];
+    if(sets.length>1){const keep=e.gap.mset;g=e.gap; // 측정 묶음마다 따로
+      sets.forEach((ss,si)=>{e.gap.mset=si;e.gap.curRes=null;gSync(e);if(e.gap.rows.length)resBlock(ss.map(q=>q.title).join(' + ')+' · ')});
+      e.gap.mset=keep;e.gap.curRes=null;gSync(e);g=e.gap.rows.length?e.gap:null}
+    else if(g)resBlock('');
+    else{h2('5-2 조건별 결과');para('','(비교할 숫자 결과가 없음)')}
+
+    h1('6','실험 결론');para(rp.concl);
+    h1('7','고찰');para(rp.disc);
+    if(e.gap&&e.gap.refs.length){h2('참고 문헌');e.gap.refs.forEach((q,i)=>{text(`[${i+1}] ${q.title}${q.source?', '+q.source:''}${q.link?', '+q.link:''}`,`400 22px ${F}`,'#252B3B',36);y+=4})}
+
+    pages.forEach((p,i)=>{const q=p.getContext('2d');q.fillStyle='#687083';q.font=`500 18px ${FM}`;q.textAlign='right';q.fillText(`${i+1} / ${pages.length}`,W-M,H-48);q.textAlign='left';q.fillText(fmtDate(Date.now())+' 생성',M,H-48)});
+    const pdf=new window.jspdf.jsPDF({unit:'pt',format:'a4',compress:true});
+    pages.forEach((p,i)=>{if(i)pdf.addPage();pdf.addImage(p.toDataURL('image/jpeg',.86),'JPEG',0,0,595.28,841.89)});
+    await saveBlob(`${e.no}_${e.title}_실험보고서.pdf`.replace(/[\\/:*?"<>|]/g,''),pdf.output('blob'),`PDF ${pages.length}쪽을 저장했어요`);
+  }catch(err){console.error(err);toast('PDF를 만들지 못했어요')}
+  btn.disabled=false;btn.innerHTML=old;
+}
+
+/* ============================================================
+   파일에서 읽기 (Claude에게 맡김)
+   PDF는 쪽마다 그림으로 바꾸고 글자도 함께 뽑아서 보낸다. 사진은 크기만 줄여 보낸다.
+   읽은 결과는 바로 넣지 않는다. "표 붙여넣기" 칸과 "열 역할 지정"에 채워 두고, 사람이 확인한 뒤 가져온다.
+   ============================================================ */
+const AIS={busy:false,msg:'',ctl:null,kind:''};
+let aiFn; // undefined = 아직 확인 안 함, null = 이 화면에서는 쓸 수 없음
+async function aiGet(){if(aiFn===undefined){try{aiFn=(window.claude&&window.claude.use?await window.claude.use('sample'):null)||null}catch(_){aiFn=null}}return aiFn}
+const AI_ERR={not_granted:'Claude 사용을 허용하지 않아서 읽지 않았어요',rate_limited:'요청이 많아요 · 잠시 뒤에 다시 해 보세요',queue_overflow:'요청이 많아요 · 잠시 뒤에 다시 해 보세요',
+  image_rejected:'이 그림은 보낼 수 없어요 · 다른 파일로 해 보세요',prompt_too_large:'자료가 너무 길어요 · 읽을 쪽을 줄여 보세요',invalid_json:'답을 표로 바꾸지 못했어요 · 다시 해 보세요',
+  refused:'Claude가 이 자료는 읽지 않았어요',cancelled:'읽기를 멈췄어요',session_expired:'Claude 로그인이 끝났어요 · 새로고침한 뒤 다시',
+  images_unavailable:'이 화면에서는 그림을 보낼 수 없어요',not_declared:'이 화면에서는 파일 읽기를 쓸 수 없어요',sampling_disabled:'이 화면에서는 파일 읽기를 쓸 수 없어요',
+  capability_disabled:'이 화면에서는 파일 읽기를 쓸 수 없어요',capability_removed:'이 화면에서는 파일 읽기를 쓸 수 없어요',
+  none:'여기서는 파일 읽기를 쓸 수 없어요 · Claude에서 연 화면에서만 돼요',nofile:'읽을 수 있는 내용이 없어요 · 다른 파일로 해 보세요',pdflib:'PDF를 여는 도구를 불러오지 못했어요 · 새로고침한 뒤 다시'};
+function loadScript(src){return new Promise((res,rej)=>{const t=document.createElement('script');t.src=src;t.onload=res;t.onerror=()=>rej({code:'pdflib'});document.head.appendChild(t)})}
+async function pdfLib(){ // PDF를 여는 도구는 필요할 때만 불러옴
+  if(!window.pdfjsLib){const base='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';await loadScript(base+'pdf.min.js');await loadScript(base+'pdf.worker.min.js')} // 작업자 스크립트도 같은 창에 올려 둠
+  return window.pdfjsLib;
+}
+function parsePages(t){ // "13-15, 18" → [13,14,15,18]
+  const out=[];String(t||'').split(/[,\s]+/).forEach(k=>{const m=k.match(/^(\d+)(?:[-~–](\d+))?$/);if(!m)return;const a=+m[1],b=m[2]?+m[2]:a;
+    for(let i=Math.min(a,b);i<=Math.max(a,b)&&out.length<200;i++)if(!out.includes(i))out.push(i)});
+  return out;
+}
+async function imgBlob(file,max=1500){const im=await loadImg(file);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(im.src);return new Promise(r=>c.toBlob(r,'image/jpeg',.85))}
+async function zipLib(){if(!window.JSZip)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');return window.JSZip}
+const isPdf=f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name),isPptx=f=>/\.pptx$/i.test(f.name);
+// 사진: 폰으로 찍어 바로 올리는 경우 (jpg, png 등)
+const isImg=f=>/^image\//i.test(f.type)||/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(f.name);
+// PPT(.pptx): 슬라이드의 글자, 차트에 들어 있는 숫자, 슬라이드에 붙은 그림을 꺼냄
+async function pptxParts(f,want,room,say){
+  say(`${f.name} 여는 중`);
+  const Z=await zipLib(),zip=await Z.loadAsync(await f.arrayBuffer());
+  const xml=async path=>{const q=zip.file(path);return q?new DOMParser().parseFromString(await q.async('string'),'application/xml'):null};
+  const norm=path=>{const o=[];path.split('/').forEach(k=>{if(k==='..')o.pop();else if(k&&k!=='.')o.push(k)});return o.join('/')};
+  const relsOf=async(path,dir)=>{const d=await xml(path.replace(/([^/]+)$/,'_rels/$1.rels'));return d?[...d.getElementsByTagName('Relationship')].map(r=>({type:r.getAttribute('Type')||'',target:norm(dir+'/'+r.getAttribute('Target')),id:r.getAttribute('Id')})):[]};
+  // 슬라이드 순서는 presentation.xml에 적힌 차례를 따름
+  const pres=await xml('ppt/presentation.xml'),pr=await relsOf('ppt/presentation.xml','ppt');
+  let order=pres?[...pres.getElementsByTagName('p:sldId')].map(k=>(pr.find(r=>r.id===k.getAttribute('r:id'))||{}).target).filter(Boolean):[];
+  if(!order.length)order=Object.keys(zip.files).filter(k=>/^ppt\/slides\/slide\d+\.xml$/.test(k)).sort((a,b)=>+a.match(/(\d+)\.xml$/)[1]-+b.match(/(\d+)\.xml$/)[1]);
+  const n=order.length,texts=[],pics=[];
+  for(let i=0;i<n;i++){
+    const d=await xml(order[i]),rels=await relsOf(order[i],'ppt/slides');let t='';
+    if(d)t=[...d.getElementsByTagName('a:p')].map(q=>[...q.getElementsByTagName('a:t')].map(k=>k.textContent).join('')).filter(Boolean).join(' / ');
+    for(const r of rels.filter(k=>/\/chart$/.test(k.type))){const c=await xml(r.target);if(!c)continue; // 차트에 저장된 숫자
+      const pts=el=>el?[...el.getElementsByTagName('c:pt')].map(k=>(k.getElementsByTagName('c:v')[0]||{}).textContent||''):[];
+      [...c.getElementsByTagName('c:ser')].forEach(ser=>{const nm=pts(ser.getElementsByTagName('c:tx')[0]).join(' '),cat=pts(ser.getElementsByTagName('c:cat')[0]||ser.getElementsByTagName('c:xVal')[0]),val=pts(ser.getElementsByTagName('c:val')[0]||ser.getElementsByTagName('c:yVal')[0]);
+        if(val.length)t+=` / [차트 ${nm}] 가로축: ${cat.join(', ')} | 값: ${val.join(', ')}`})}
+    if(t)texts.push(`[${f.name} ${i+1}쪽] ${t.slice(0,2500)}`);
+    pics.push(rels.filter(k=>/\/image$/.test(k.type)&&/\.(png|jpe?g|gif|bmp|webp)$/i.test(k.target)).map(k=>k.target));
+  }
+  let pages=want.length?want.filter(k=>k>=1&&k<=n):[...Array(n)].map((_,k)=>k+1);
+  if(!want.length){let c=0,keep=[];for(const k of [...pages].reverse()){if(c>=room)break;if(pics[k-1].length){keep.unshift(k);c+=pics[k-1].length}}pages=keep} // 따로 정하지 않으면 그림이 있는 뒤쪽 슬라이드부터
+  const images=[],used=[];
+  for(const k of pages)for(const path of pics[k-1]){if(images.length>=room)break;say(`${f.name} ${k}쪽의 그림을 꺼내는 중 · 전체 ${n}쪽`);
+    try{const ab=await zip.file(path).async('arraybuffer'),ext=path.split('.').pop().toLowerCase();images.push(await imgBlob(new Blob([ab],{type:'image/'+(ext==='jpg'?'jpeg':ext)})));if(!used.includes(`${f.name} ${k}쪽`))used.push(`${f.name} ${k}쪽`)}catch(_){}}
+  return {texts,images,used,n};
+}
+// 파일들을 Claude에게 보낼 그림과 글자로 바꿈. want = 읽을 쪽(없으면 뒤쪽부터), maxN = 보낼 수 있는 그림 수
+async function fileParts(files,want,maxN,say){
+  const texts=[],images=[],used=[],skipped=[];
+  files=[...files].sort((a,b)=>isImg(b)-isImg(a)); // 직접 고른 사진을 먼저 넣고, 남는 자리에 PPT·PDF의 쪽을 넣음
+  for(const f of files){
+    const room=maxN-images.length;
+    if(isPptx(f)){const r=await pptxParts(f,want,Math.max(0,room),say);texts.push(...r.texts);images.push(...r.images);used.push(...r.used);if(!r.used.length&&r.texts.length)used.push(`${f.name} 글자 ${r.n}쪽`)}
+    else if(isPdf(f)){
+      say(`${f.name} 여는 중`);
+      const lib=await pdfLib(),doc=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,n=doc.numPages;
+      for(let i=1;i<=n;i++){const tc=await (await doc.getPage(i)).getTextContent(),t=tc.items.map(q=>q.str).join(' ').replace(/\s+/g,' ').trim();if(t)texts.push(`[${f.name} ${i}쪽] ${t.slice(0,1500)}`)}
+      let pages=want.length?want.filter(k=>k>=1&&k<=n):[...Array(n)].map((_,k)=>k+1);
+      if(pages.length>room)pages=want.length?pages.slice(0,Math.max(0,room)):pages.slice(-room||n); // 따로 정하지 않으면 뒤쪽 (결과는 보통 뒤에 있음)
+      if(room<=0)pages=[];
+      for(const k of pages){say(`${f.name} ${k}쪽을 그림으로 바꾸는 중 · 전체 ${n}쪽`);
+        const pg=await doc.getPage(k),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:Math.min(2,1500/Math.max(v0.width,v0.height))});
+        const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);const cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,c.width,c.height);
+        await pg.render({canvasContext:cx,viewport:vp}).promise;images.push(await new Promise(r=>c.toBlob(r,'image/jpeg',.85)));used.push(`${f.name} ${k}쪽`)}
+    }else if(isImg(f)){
+      if(room<=0){skipped.push(f.name);continue} // 보낼 수 있는 그림 수를 넘으면 건너뜀
+      say(`${f.name} 여는 중`);
+      try{images.push(await imgBlob(f));used.push(f.name)}catch(_){toast(`이 사진은 열 수 없어요 · ${esc(f.name)}`)}
+    }
+  }
+  return {text:texts.join('\n').slice(0,30000),images,used,skipped};
+}
+const aiTablePrompt=(e,txt)=>`너는 화학 실험 자료에서 숫자 데이터를 표로 옮기는 일을 한다. 함께 보낸 그림(슬라이드·보고서·사진)과 아래 글자에서 이 실험의 결과 숫자를 찾아 표 하나로 정리해라.
+
+규칙
+- 자료에 실제로 적혀 있는 숫자만 옮긴다. 그래프에 숫자 라벨이 없으면 눈금으로 어림하지 말고 빈 문자열로 둔다. 추측하지 않는다.
+- 한 줄은 측정 하나다(시료 하나, 또는 한 조의 시료 하나). 여러 조의 결과가 있으면 조마다 줄을 나눈다.
+- 열의 종류 kind: "name" = 줄 이름(최대 1개), "rep" = 조·회차 번호(최대 1개), "cond" = 실험자가 바꿔 준 값(농도, 부피, 온도, 시간, 세척 여부, 화합물 종류 등), "result" = 측정한 숫자(피크 위치, 흡광도, 수득량 등), "note" = 글로 된 관찰.
+- 단위는 unit에 따로 적고, 값에는 숫자만 적는다. 측정했지만 신호가 없다고 자료에 적혀 있으면 "없음"으로 적는다.
+- 모든 시료에 똑같은 값(실험 방법의 시약 사용량 등)과, 이 실험의 결과가 아닌 일반 설명(이론 표, 예시 그림)의 숫자는 넣지 않는다.
+- 숫자를 하나도 찾지 못하면 columns와 rows를 빈 배열로 둔다.
+
+아래 모양의 JSON 하나만 답한다. 설명이나 코드 블록 표시는 붙이지 않는다.
+{"columns":[{"name":"열 이름","unit":"단위 또는 빈 문자열","kind":"name|rep|cond|result|note"}],"rows":[["첫 열 값","둘째 열 값"]],"notes":"읽기 어려웠거나 사람이 확인해야 할 점을 한국어 한두 문장으로. 없으면 빈 문자열"}
+
+실험: ${e.no} ${e.title}
+${txt?`자료에서 뽑은 글자:\n${txt}`:'(글자를 뽑을 수 없는 자료다. 그림만 보고 판단한다.)'}`;
+const aiRefPrompt=(e,txt)=>`함께 보낸 그림과 아래 글자는 문헌(논문·교재·수업 자료)의 앞부분이다. 참고 문헌 목록에 적을 정보를 뽑아라. 자료에 없는 것은 빈 문자열로 두고, 추측하지 않는다.
+
+아래 모양의 JSON 하나만 답한다. 설명이나 코드 블록 표시는 붙이지 않는다.
+{"title":"문헌의 제목","source":"저자, 학술지나 출판사, 연도, 권과 쪽","link":"DOI 또는 URL","summary":"「${e.no} ${e.title}」 실험과 관련해 참고할 내용을 한국어 두세 문장으로","values":[{"what":"무엇의 값인지(조건 포함)","value":"숫자","unit":"단위"}]}
+
+${txt?`자료에서 뽑은 글자:\n${txt}`:'(글자를 뽑을 수 없는 자료다. 그림만 보고 판단한다.)'}`;
+const aiClean=v=>String(v??'').replace(/[\t\n\r]+/g,' ').trim();
+function aiFillTable(d,parts){ // 읽은 표를 "표 붙여넣기" 칸과 "열 역할 지정"에 채움
+  const cols=Array.isArray(d&&d.columns)?d.columns.filter(c=>c&&aiClean(c.name)):[],rows=Array.isArray(d&&d.rows)?d.rows.filter(Array.isArray):[];
+  V.gopen=V.gopen||{};V.gopen.in=true;V.gauto=false;
+  if(!cols.length||!rows.length){V.gai=null;V.gparsed=null;V.gmsg='표로 옮길 숫자를 찾지 못했어요.'+(d&&aiClean(d.notes)?' Claude의 메모: '+aiClean(d.notes):'')+' 읽을 쪽을 바꿔서 다시 해 보세요.';return}
+  const head=cols.map(c=>aiClean(c.name)+(aiClean(c.unit)?` (${aiClean(c.unit)})`:''));
+  V.gpaste=[head.join('\t')].concat(rows.map(r=>cols.map((_,i)=>aiClean(r[i])).join('\t'))).join('\n');
+  V.gparsed=parseTable(V.gpaste);
+  const guess=guessRoles(V.gparsed.header,V.gparsed.rows),seen={};
+  V.groles=cols.map((c,i)=>{const k=['name','rep','cond','result','note'].includes(c.kind)?c.kind:guess[i];if((k==='name'||k==='rep')&&seen[k])return 'cond';seen[k]=1;return k});
+  if(!V.groles.includes('result'))V.groles=guess;
+  V.gai={n:rows.length,used:parts.used,notes:aiClean(d.notes),skipped:parts.skipped||[]};V.gmsg='';
+  const g=G();if(g.source!=='table')A.gSrc({dataset:{s:'table'}}); // 파일에서 읽은 표는 "표" 쪽으로 들어감
+}
+function aiFillRef(d){
+  const vals=Array.isArray(d&&d.values)?d.values.filter(q=>q&&aiClean(q.value)).map(q=>`${aiClean(q.what)} ${aiClean(q.value)}${aiClean(q.unit)?' '+aiClean(q.unit):''}`):[];
+  V.gref={title:aiClean(d&&d.title),source:aiClean(d&&d.source),link:aiClean(d&&d.link),note:[aiClean(d&&d.summary),vals.length?'보고값: '+vals.join(' / '):''].filter(Boolean).join('\n')};
+  V.gopen=V.gopen||{};V.gopen.note=true;
+  if(!V.gref.title&&!V.gref.note){V.gref=null;toast('문헌 정보를 찾지 못했어요');return}
+  toast('문헌 정보를 채웠어요 · 확인하고 "선행연구 추가"를 누르세요');
+}
+async function aiRun(files,kind){
+  const e=exp();if(AIS.busy||!e)return;
+  if(files.some(f=>/\.ppt$/i.test(f.name)))return toast('옛 형식(.ppt)은 읽지 못해요 · .pptx나 PDF로 저장해서 올려 주세요');
+  if(files.some(f=>!isPdf(f)&&!isPptx(f)&&!isImg(f)))return toast('PPT(.pptx), PDF, 사진만 올릴 수 있어요');
+  const say=m=>{AIS.msg=m;const el=$('#aimsg');if(el)el.textContent=m};
+  AIS.busy=true;AIS.kind=kind;AIS.ctl=new AbortController();AIS.msg='준비하는 중';render();
+  try{
+    const ai=await aiGet();if(!ai)throw {code:'none'};
+    const lim=await ai.limits().catch(()=>null),canImg=!!(lim&&lim.images);
+    const maxN=canImg?Math.max(1,Math.min(lim.images.maxCount||4,kind==='ref'?3:8)):0;
+    const parts=await fileParts(files,kind==='ref'?[1,2,3]:parsePages(V.gpages),maxN,say);
+    if(!parts.images.length&&!parts.text)throw {code:canImg?'nofile':'images_unavailable'};
+    say(`Claude가 ${parts.images.length?parts.images.length+'쪽의 그림과 ':''}글자를 읽는 중 · 보통 10초에서 1분쯤 걸려요`);
+    const opt={signal:AIS.ctl.signal};if(parts.images.length)opt.images=parts.images;
+    const d=await ai.json(kind==='ref'?aiRefPrompt(e,parts.text):aiTablePrompt(e,parts.text),opt);
+    if(exp()===e){if(kind==='ref')aiFillRef(d);else{aiFillTable(d,parts);if(V.gparsed)toast(`Claude가 <b>${V.gai.n}줄</b>을 읽었어요 · 확인하고 가져오세요`)}}
+  }catch(err){const c=err&&err.code;if(!c)console.error(err);toast(AI_ERR[c]||'읽는 중에 문제가 생겼어요 · 다시 해 보세요')}
+  AIS.busy=false;AIS.ctl=null;render();
+}
+// 다른 AI(ChatGPT, Gemini)에 붙여넣을 지시문. 답은 마크다운 표로 받고, 열 이름 앞에 종류를 붙이게 해서 역할을 알아냄
+const aiCopyPrompt=e=>`첨부한 실험 자료(PPT·PDF·사진)에서 「${e.no} ${e.title}」 실험의 결과 숫자를 찾아 표 하나로 정리해 줘.
+
+규칙
+- 자료에 실제로 적혀 있는 숫자만 옮겨. 그래프에 숫자 라벨이 없으면 눈금으로 어림하지 말고 빈칸으로 둬. 추측하지 마.
+- 한 줄은 측정 하나(시료 하나, 또는 한 조의 시료 하나)야. 여러 조의 결과가 있으면 조마다 줄을 나눠.
+- 첫 줄(열 이름)에는 종류를 앞에 붙여 줘: "이름", "조", "조건: 열 이름 (단위)", "결과: 열 이름 (단위)", "메모: 열 이름".
+  조건은 실험자가 바꿔 준 값(농도, 부피, 온도, 시간, 세척 여부, 화합물 종류 등)이고, 결과는 측정한 숫자(피크 위치, 흡광도, 수득량 등)야.
+- 값 칸에는 숫자만 적어. 측정했지만 신호가 없다고 적혀 있으면 "없음"이라고 적어.
+- 모든 시료에 똑같은 값(시약 사용량 등)과 이론 설명에 나오는 숫자는 넣지 마.
+- 답은 마크다운 표 하나만 줘. 사람이 확인해야 할 점이 있으면 표 아래에 "확인할 점:"으로 시작하는 한 줄만 덧붙여.`;
+const AI_PROV={claude:{name:'Claude'},chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/'},gemini:{name:'Gemini',url:'https://gemini.google.com/app'}};
+// Claude 화면 밖(독립 웹사이트)에서는 Claude 직접 읽기를 쓸 수 없으므로 목록에서 뺌
+const IN_CLAUDE=!!(window.claude&&window.claude.use);
+if(!IN_CLAUDE)delete AI_PROV.claude;
+function curProv(){return AI_PROV[S.aiProv]?S.aiProv:Object.keys(AI_PROV)[0]}
+const aiRefCopyPrompt=e=>`첨부한 문헌(논문·교재·수업 자료)에서 참고 문헌 목록에 적을 정보를 뽑아 줘. 자료에 없는 것은 비워 두고, 추측하지 마.
+
+답은 아래 모양 그대로 줘. 다른 말은 붙이지 마.
+제목: (문헌의 제목)
+출처: (저자, 학술지나 출판사, 연도, 권과 쪽)
+링크: (DOI 또는 URL)
+요약: (「${e.no} ${e.title}」 실험과 관련해 참고할 내용을 두세 문장으로, 한 줄로)
+보고값: (문헌에 보고된 숫자가 있으면 "무엇 값 단위" 형식으로, 여러 개면 / 로 구분)`;
+
+/* ---------- 파일로 주고받기: 실험 하나 또는 전체 기록 ----------
+   받은 쪽에서는 같은 실험이면 합치고(사진·측정값은 합집합, 메모는 더 나중에 쓴 쪽), 없던 실험이면 새로 넣는다. */
+const clone=o=>JSON.parse(JSON.stringify(o));
+const packExp=e=>{const c=clone(e);c.steps.forEach(q=>q.photos.forEach(ph=>{delete ph.orig}));return c}; // 다듬기 전 원본 사진은 빼서 파일을 줄임
+async function exportFile(kind){
+  const body={app:'labstep',v:1,kind,from:ME,at:Date.now()};let name;
+  if(kind==='exp'){const e=exp();body.team=team().name;body.exp=packExp(e);name=`${e.no}_${e.title}_${ME}`}
+  else{body.teams=S.teams.map(t=>({...t,experiments:t.experiments.map(packExp)}));name=`랩스텝_백업_${ME}_${fmtDate(Date.now())}`}
+  await saveBlob(name.replace(/[\\/:*?"<>|]/g,'')+'.labstep.json',new Blob([JSON.stringify(body)],{type:'application/json'}),kind==='exp'?'실험 파일을 저장했어요 · 팀원에게 보내면 돼요':'백업 파일을 저장했어요');
+}
+function mergeExp(a,b){ // b(받은 것)를 a(내 것)에 합침. 무엇이 얼마나 들어왔는지 돌려줌
+  const n={ph:0,st:0,ms:0,ob:0};
+  b.steps.forEach((bs,bi)=>{let as=a.steps.find(q=>q.id===bs.id);
+    if(!as){as=clone(bs);a.steps.splice(Math.min(bi,a.steps.length),0,as);n.st++;n.ph+=as.photos.length;n.ms+=(as.meas||[]).length;return}
+    bs.photos.forEach(ph=>{if(!as.photos.some(q=>q.id===ph.id)){as.photos.push(clone(ph));n.ph++}});
+    as.photos.sort((x,y)=>(x.at||0)-(y.at||0));
+    // 관찰 메모: 한쪽이 다른 쪽을 이어 쓴 것이면 긴 쪽을, 서로 다른 내용이면 지우지 않고 둘 다 남김
+    {const mt=(as.obs&&as.obs.text)||'',bt=(bs.obs&&bs.obs.text)||'';
+     if(bt&&!mt.includes(bt)){as.obs=!mt||bt.includes(mt)?{...bs.obs}:{text:mt+'\n— '+(bs.obs.by||'팀원')+': '+bt,by:as.obs.by,at:Math.max(as.obs.at||0,bs.obs.at||0)};n.ob++}}
+    mEnsure(as);(bs.mcols||[]).forEach(c=>{if(!as.mcols.some(q=>mKey(q)===mKey(c)))as.mcols.push({...c})});(bs.mrows||[]).forEach(r=>{if(!as.mrows.includes(r))as.mrows.push(r)});
+    (bs.meas||[]).forEach(m=>{const k=as.meas.findIndex(q=>q.sample===m.sample&&mKey(q)===mKey(m));
+      if(k<0){as.meas.push({...m});n.ms++}else if(m.value!==as.meas[k].value&&(m.at||0)>(as.meas[k].at||0)){as.meas[k]={...m};n.ms++}})});
+  a.report=a.report||{goal:'',theory:'',concl:'',disc:''};const br=b.report||{};
+  ['goal','theory','concl','disc'].forEach(k=>{if(!String(a.report[k]||'').trim()&&br[k])a.report[k]=br[k]}); // 보고서 글은 내 것이 비어 있을 때만 받음
+  if(b.gap&&(b.gap.rows||[]).length&&b.gap.source==='table'&&!(a.gap&&(a.gap.rows||[]).length))a.gap=clone(b.gap);
+  return n;
+}
+const validExp=e=>e&&typeof e.id==='string'&&Array.isArray(e.steps)&&e.steps.every(q=>q&&typeof q.id==='string'&&Array.isArray(q.photos));
+// 받은 실험 하나를 팀 t에 넣거나, 같은 실험이 있으면 합침
+function takeExp(t,e){
+  e.steps.forEach(q=>{q.obs=q.obs||{text:'',by:'',at:0};q.photos=q.photos.filter(ph=>ph&&typeof ph.src==='string'&&/^data:image\//.test(ph.src))}); // 그림이 아닌 것은 버림
+  let mine=null;S.teams.forEach(k=>k.experiments.forEach(x=>{if(x.id===e.id)mine=x}));
+  if(mine)return {merged:true,title:mine.title,n:mergeExp(mine,e)};
+  t.experiments.unshift(e);return {merged:false,title:e.title,n:{ph:e.steps.reduce((p,q)=>p+q.photos.length,0),st:e.steps.length,ms:e.steps.reduce((p,q)=>p+(q.meas||[]).length,0),ob:0}};
+}
+async function importFile(f){
+  let d;try{d=JSON.parse(await f.text())}catch(_){return toast('랩스텝 파일이 아니에요')}
+  if(!d||d.app!=='labstep')return toast('랩스텝 파일이 아니에요');
+  const who=esc(d.from||'팀원');
+  if(d.kind==='exp'&&validExp(d.exp)){
+    const t=team()||S.teams[0],r=takeExp(t,d.exp);save();render();
+    return toast(r.merged?`<b>${who}</b> 님의 기록을 합쳤어요 · 사진 ${r.n.ph}장, 측정값 ${r.n.ms}개${r.n.ob?`, 메모 ${r.n.ob}개`:''}${r.n.st?`, 새 단계 ${r.n.st}개`:''}`
+      :`<b>${who}</b> 님의 실험을 가져왔어요 · ${esc(r.title)} (사진 ${r.n.ph}장)`)}
+  if(d.kind==='all'&&Array.isArray(d.teams)){let ne=0,me=0;
+    d.teams.forEach(bt=>{if(!bt||!Array.isArray(bt.experiments))return;let t=S.teams.find(k=>k.id===bt.id);if(!t){t={id:String(bt.id||uid()),name:String(bt.name||'가져온 팀'),course:String(bt.course||''),experiments:[]};S.teams.push(t)}
+      [...bt.experiments].reverse().forEach(e=>{if(!validExp(e))return;takeExp(t,e).merged?me++:ne++})});
+    save();render();return toast(`백업을 가져왔어요 · 새 실험 ${ne}개, 합친 실험 ${me}개`)}
+  toast('읽을 수 없는 파일이에요');
+}
+
+/* ---------- 수업 자료에서 실험 단계 뽑기 ---------- */
+const aiStepsRules=`- 자료에 적힌 내용만 쓴다. 없는 단계를 만들지 않는다. 시약의 이름·양·온도·시간은 자료에 적힌 그대로 옮긴다.
+- 실험자가 실제로 손으로 하는 일만 단계로 삼는다. 이론 설명, 주의 사항 목록, 결과 보고서 안내는 단계가 아니다.
+- 한 단계는 사진 한두 장으로 기록할 만한 작업 하나다. 너무 잘게 쪼개지 않는다. 보통 5~12단계가 된다.
+- 실험이 여러 부분으로 나뉘면(예: A. 합성, B. 분석) 구간에 그 이름을 적는다. 나뉘지 않으면 "실험 과정"이라고 적는다.
+- 단계 이름은 12자 안팎으로 짧게, 할 일은 한두 문장으로 쓴다.`;
+const aiStepsPrompt=txt=>`너는 화학 실험 수업 자료에서 실험 과정을 단계로 나누는 일을 한다. 아래 자료에서 "실험 방법" 또는 "실험 과정"에 해당하는 부분을 찾아, 실험자가 따라 할 순서대로 단계를 나눠라.
+
+규칙
+${aiStepsRules}
+- no는 자료에 적힌 실험 번호("실험 3"처럼), title은 실험 제목, course는 과목 이름이다. 자료에 없으면 빈 문자열로 둔다.
+- goal은 자료의 실험 목표를 그대로 옮긴다. theory는 자료의 이론 부분을 한국어 3~5문장으로 요약한다. 자료에 없으면 빈 문자열로 둔다.
+- 실험 과정을 찾지 못하면 steps를 빈 배열로 둔다.
+
+아래 모양의 JSON 하나만 답한다. 설명이나 코드 블록 표시는 붙이지 않는다.
+{"no":"","title":"","course":"","goal":"","theory":"","steps":[{"section":"구간 이름","title":"단계 이름","detail":"할 일"}],"notes":"사람이 확인해야 할 점을 한국어 한 문장으로. 없으면 빈 문자열"}
+
+${txt?`자료에서 뽑은 글자:\n${txt}`:'(글자를 뽑을 수 없는 자료다. 함께 보낸 그림만 보고 판단한다.)'}`;
+// 다른 AI(ChatGPT, Gemini)에 붙여넣을 지시문. 답은 머리말 몇 줄과 마크다운 표로 받음
+const aiStepsCopyPrompt=()=>`첨부한 실험 수업 자료(PPT·PDF·사진)에서 "실험 방법" 또는 "실험 과정" 부분을 찾아, 실험자가 따라 할 순서대로 단계를 나눠 줘.
+
+규칙
+${aiStepsRules.replace(/한다\./g,'해.').replace(/쓴다\./g,'써.').replace(/않는다\./g,'마.').replace(/옮긴다\./g,'옮겨.').replace(/삼는다\./g,'삼아.').replace(/아니다\./g,'아니야.').replace(/하나다\./g,'하나야.').replace(/된다\./g,'돼.').replace(/적는다\./g,'적어.')}
+
+답은 아래 모양 그대로 줘. 다른 말은 붙이지 마.
+실험 번호: (자료에 적힌 번호, 없으면 비움)
+제목: (실험 제목)
+과목: (과목 이름, 없으면 비움)
+목표: (자료의 실험 목표)
+원리: (자료의 이론 부분을 3~5문장으로 요약, 한 줄로)
+
+| 구간 | 단계 이름 | 할 일 |
+|---|---|---|
+| A. … | … | … |`;
+function parseStepsAnswer(text){ // 위 지시문에 대한 답을 읽음
+  const meta={};text.split(/\r?\n/).forEach(l=>{const m=l.replace(/[*_`#>]/g,'').match(/^\s*-?\s*(실험 번호|제목|과목|목표|원리)\s*[:：]\s*(.*)$/);if(m&&meta[m[1]]===undefined)meta[m[1]]=m[2].trim()});
+  const p=parseTable(text);if(!p)return null;
+  const h=p.header.map(x=>x.replace(/\s/g,'')),ci=re=>h.findIndex(x=>re.test(x));
+  let a=ci(/구간|부분/),b=ci(/단계|이름/),c=ci(/할일|내용|설명/);
+  if(b<0){if(p.header.length>=3){a=0;b=1;c=2}else{a=-1;b=0;c=1}}
+  const steps=p.rows.map(r=>({section:(a>=0?r[a]:'')||'실험 과정',title:(r[b]||'').trim(),detail:(c>=0?r[c]:'')||''})).filter(q=>q.title&&!/^[.…]+$/.test(q.title));
+  return steps.length?{no:meta['실험 번호']||'',title:meta['제목']||'',course:meta['과목']||'',goal:meta['목표']||'',theory:meta['원리']||'',steps}:null;
+}
+function stepsToDraft(d,file){ // 읽은 단계를 "확인하고 고치기" 화면에 올림
+  const steps=Array.isArray(d&&d.steps)?d.steps.map(q=>({section:aiClean(q&&q.section)||'실험 과정',title:aiClean(q&&q.title),detail:aiClean(q&&q.detail)})).filter(q=>q.title):[];
+  if(!steps.length)return false;
+  V.draft={no:aiClean(d.no),title:aiClean(d.title)||String(file||'').split(',')[0].replace(/\.[^.]+$/,''),course:aiClean(d.course)||(team()||{}).course||'',goal:aiClean(d.goal),theory:String(d.theory??'').trim(),steps,notes:aiClean(d.notes),ai:true};
+  V.stage='review';return true;
+}
+async function aiSteps(files){
+  if(AIS.busy)return;
+  if(files.some(f=>/\.ppt$/i.test(f.name)))return toast('옛 형식(.ppt)은 읽지 못해요 · .pptx나 PDF로 저장해서 올려 주세요');
+  if(files.some(f=>!isPdf(f)&&!isPptx(f)&&!isImg(f)))return toast('PPT(.pptx), PDF, 사진만 올릴 수 있어요');
+  const say=m=>{AIS.msg=m;const el=$('#aimsg');if(el)el.textContent=m};
+  AIS.busy=true;AIS.kind='steps';AIS.ctl=new AbortController();AIS.msg='준비하는 중';V.stage='extracting';V.file=files.map(f=>f.name).join(', ');render();
+  let ok=false;
+  try{
+    const ai=await aiGet();if(!ai)throw {code:'none'};
+    const lim=await ai.limits().catch(()=>null),maxN=lim&&lim.images?Math.max(1,Math.min(lim.images.maxCount||4,8)):0;
+    let parts=await fileParts(files,[],0,say); // 먼저 글자만 뽑음 (빠르고 가벼움)
+    if((parts.text.length<800||files.some(isImg))&&maxN)parts=await fileParts(files,[...Array(maxN)].map((_,k)=>k+1),maxN,say); // 글자가 거의 없으면(스캔본·사진) 앞쪽을 그림으로 보냄
+    if(!parts.text&&!parts.images.length)throw {code:'nofile'};
+    say('Claude가 실험 과정을 찾아 단계로 나누는 중 · 보통 10초에서 1분쯤 걸려요');
+    const opt={signal:AIS.ctl.signal};if(parts.images.length)opt.images=parts.images;
+    const d=await ai.json(aiStepsPrompt(parts.text),opt);
+    if(V.name==='add'){ok=stepsToDraft(d,V.file);if(!ok)toast('실험 과정을 찾지 못했어요 · 다른 자료로 해 보세요'+(d&&aiClean(d.notes)?' ('+esc(aiClean(d.notes))+')':''))}
+  }catch(err){const c=err&&err.code;if(!c)console.error(err);toast(AI_ERR[c]||'읽는 중에 문제가 생겼어요 · 다시 해 보세요')}
+  AIS.busy=false;AIS.ctl=null;if(V.name==='add'&&!ok)V.stage='pick';render();if(ok)window.scrollTo(0,0);
+}
+
+function aiBox(){
+  const busy=AIS.busy&&AIS.kind==='table',pv=curProv(),P=AI_PROV[pv];
+  let o=`<div class="aibox"><div class="t">파일에서 표 읽기</div><div class="d">실험 PPT나 PDF, 폰으로 찍은 사진에서 AI가 숫자를 찾아 표로 옮겨요. 평소에 쓰는 AI를 고르세요.</div>`+
+    `<div class="aiprov" role="group" aria-label="사용할 AI">${Object.keys(AI_PROV).map(k=>`<button class="${k===pv?'on':''}" data-a="aiProv" data-k="${k}" aria-pressed="${k===pv}">${AI_PROV[k].name}</button>`).join('')}</div>`;
+  if(pv==='claude')o+=busy?`<div class="aist"><i class="spin"></i><span id="aimsg">${esc(AIS.msg)}</span></div><button class="btn ghost sm" data-a="aiStop" style="margin-top:12px">멈추기</button>`
+    :`<div class="d" style="margin-top:0">파일을 올리면 이 화면에서 바로 읽어요. 올린 쪽은 Claude로 전송되고, 내 Claude 사용량을 써요.</div><div class="gf" style="padding:0 0 12px"><label class="label">읽을 쪽 · PPT와 PDF만 (비우면 뒤쪽부터)</label><input data-gi="pages" value="${esc(V.gpages||'')}" placeholder="예: 13-15"></div><button class="btn orange" data-a="aiPick" data-k="table">${I.doc}PPT · PDF · 사진 올리기</button>`;
+  else o+=`<div class="d" style="margin-top:0">이 화면에서 ${P.name}를 직접 부를 수는 없어요. 대신 아래 순서로 하면 ${P.name}가 읽은 표를 그대로 가져올 수 있어요.</div>`+
+    `<ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy">지시문 복사</button></li>`+
+    `<li>${P.name}를 열어 실험 PPT나 PDF, 사진을 첨부하고, 복사한 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li>`+
+    `<li>${P.name}가 답한 표를 복사해서 아래 "표 붙여넣기" 칸에 붙여넣고 "표 읽기"를 눌러요. 조건과 결과가 자동으로 나뉘어요.</li></ol>`;
+  return o+`</div>`;
+}
+
+/* ---------- boot ---------- */
+(async()=>{
+  render();
+  if(await DB.open()){const st=await DB.get();if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
+    if(S.loggedIn){V={name:'teams'}}render()}}
+  // Claude에 로그인한 사람이면 그 이름을 씀 (못 가져오면 첫 화면에서 직접 적음)
+  try{const u=window.claude&&window.claude.use?await window.claude.use('user'):null,m=u?await u.me():null;
+    if(m&&m.name&&!(S.me&&S.me.src==='claude'&&S.me.name===m.name)){S.me={name:m.name,id:m.id||null,src:'claude'};ME=m.name;save();if(['login','teams','team','members'].includes(V.name))render()}}catch(_){}
+})();
+</script>
+</body>
+</html>
