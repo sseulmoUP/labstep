@@ -772,7 +772,7 @@ function teamV(){
   const t=team();
   return `${topbar(esc(t.name),`<button class="iconbtn" data-a="members" aria-label="팀원">${I.users}</button>`)}
   <div class="content">
-   <button class="members" data-a="members">${avRow(t)}<span class="txt">기록한 사람 ${people(t).length}명</span><span class="mono" style="font-size:12px">›</span></button>
+   <button class="members" data-a="members">${avRow(t)}<span class="txt">기록한 사람 ${people(t).length}명${t.sync&&t.sync.code?' · 실시간 공유 중':''}</span><span class="mono" style="font-size:12px">›</span></button>
    <div class="sect-h"><span class="label">실험</span><span class="label">${t.experiments.length}</span></div>
    ${t.experiments.length?t.experiments.map(e=>{const [d,n]=progress(e);const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);return `<button class="card" data-a="openExp" data-id="${e.id}">
       <div class="label">${esc(e.no)} · ${fmtDate(e.created)}</div>
@@ -793,7 +793,7 @@ function members(){
    ${ps.map(m=>`<div class="mem"><span class="av ${m.me?'me':''}">${initial(m.name)}</span>
      <div class="n"><b>${esc(m.name)}</b> ${m.me?'<span class="tag o">나</span>':''}<div>${m.me?(fromClaude?'Claude 계정의 이름':'직접 적은 이름'):'사진·메모에 남은 이름'}</div></div>
      ${m.me&&!fromClaude?`<button class="mini" data-a="rename">이름 바꾸기</button>`:''}</div>`).join('')}
-   <div class="hint">기록은 이 기기에 저장돼요. 팀원과 같이 쓰려면 실험의 "결과 모아보기" 맨 아래에서 <b>실험 파일</b>을 만들어 보내세요. 받은 사람이 "받은 파일 합치기"를 누르면 사진·메모·측정값이 합쳐져요. 서로의 화면에 바로 나타나는 실시간 공유와 초대는 아직 없어요.</div>
+   ${syncBox(t)}
   </div>`;
 }
 
@@ -2266,6 +2266,88 @@ function aiBox(){
     `<li>${P.name}가 답한 표를 복사해서 아래 "표 붙여넣기" 칸에 붙여넣고 "표 읽기"를 눌러요. 조건과 결과가 자동으로 나뉘어요.</li></ol>`;
   return o+`</div>`;
 }
+
+/* ---------- 실시간 팀 공유 ----------
+   같은 팀 코드를 쓰는 기기끼리 실험 기록을 서버(Supabase)를 거쳐 주고받는다.
+   실험 글자 부분과 사진을 따로 보낸다. 사진은 한 번만 올리고, 받는 쪽은 자기 기기에 없는 사진만 받는다.
+   받은 기록은 "받은 파일 합치기"와 같은 규칙(mergeExp)으로 합친다. 지운 것은 전달되지 않는다. */
+const SYNC={on:!IN_CLAUDE,url:'https://yehtixmnykkqscocuodd.supabase.co/rest/v1/rpc/',key:'sb_publishable_WbPp9JgPgmI2jQN2jcPLRA_QlaRal89',busy:false,sig:{},seen:{},since:{},last:0,err:'',wantRender:false};
+async function rpc(fn,body){
+  const r=await fetch(SYNC.url+fn,{method:'POST',headers:{apikey:SYNC.key,Authorization:'Bearer '+SYNC.key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('sync '+r.status);const t=await r.text();return t?JSON.parse(t):null}
+const lightExp=e=>JSON.stringify(e,(k,v)=>k==='src'||k==='orig'?undefined:v); // 사진 그림은 빼고 글자 부분만
+const fmtCode=c=>c.replace(/(.{4})(?=.)/g,'$1-');
+const syncStatus=()=>SYNC.err?'연결이 안 돼요 · 다시 시도하는 중이에요':SYNC.last?`마지막으로 맞춘 시각 ${fmt(SYNC.last)}`:'연결하는 중…';
+function syncBox(t){
+  if(!SYNC.on)return `<div class="hint">기록은 이 기기에 저장돼요. 팀원과 같이 쓰려면 실험의 "결과 모아보기" 맨 아래에서 <b>실험 파일</b>을 만들어 보내세요. 받은 사람이 "받은 파일 합치기"를 누르면 사진·메모·측정값이 합쳐져요.</div>`;
+  const sy=t.sync;
+  if(sy&&sy.code)return `<div class="secname">실시간 공유 · 켜져 있어요</div>
+   <div class="linkbox"><div class="u" id="synccode">${esc(sy.code)}</div><div class="r"><button class="o" data-a="syncCopy">코드 복사</button><button data-a="syncOff">공유 끄기</button></div></div>
+   <div class="gnote" id="syncst">${syncStatus()}</div>
+   <div class="hint">팀원이 자기 휴대폰이나 컴퓨터에서 이 사이트를 열고, 팀원 화면의 "코드로 참여하기"에 위 코드를 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
+  return `<div class="secname">실시간 공유</div>
+   <div class="gnote" style="padding-top:4px">같은 팀 코드를 쓰는 기기끼리 사진·메모·측정값을 자동으로 주고받아요. 휴대폰으로 찍은 사진이 컴퓨터 화면에 바로 나타나요.</div>
+   <div class="grow"><button class="btn black" data-a="syncNew">이 팀의 공유 시작하기</button></div>
+   <div class="gf"><label class="label" for="sync-code">팀원에게 코드를 받았다면 · 코드로 참여하기</label><input id="sync-code" placeholder="예: K7M2-Q9XF-3HTA" autocapitalize="characters" autocomplete="off" spellcheck="false"></div>
+   <div class="grow"><button class="btn ghost sm" data-a="syncJoin">참여하기</button></div>
+   <div class="hint">공유를 켜지 않으면 기록은 이 기기에만 저장돼요. 파일로 주고받으려면 실험의 "결과 모아보기" 맨 아래 "실험 파일 만들기"를 쓰세요.</div>`;
+}
+// 글자를 적는 중이거나 덮개 화면이 떠 있으면 화면을 다시 그리지 않고 미뤄 둠 (적던 글자와 커서를 지키려고)
+function softRender(){
+  if(['add','edit'].includes(V.name))return;
+  const a=document.activeElement,typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='file';
+  if(typing||document.querySelector('.sheet-bg,.crop,.viewer')){SYNC.wantRender=true;return}
+  SYNC.wantRender=false;const y=window.scrollY;render();window.scrollTo(0,y);
+}
+document.addEventListener('focusout',()=>{if(SYNC.wantRender)setTimeout(()=>{if(SYNC.wantRender)softRender()},300)});
+async function syncTeam(t){
+  const sy=t.sync,code=sy.code;sy.sent=sy.sent||{};let changed=false,got={ph:0,ms:0,ex:0},stuck=false;
+  // 1) 받기: 지난번 이후에 바뀐 실험만
+  const rows=await rpc('ls_pull_exps',{p_code:code,p_since:SYNC.since[code]||null})||[];
+  for(const row of rows){
+    const k=code+'|'+row.exp_id,d=row.data;SYNC.seen[k]=row.updated_at;
+    if(validExp(d)){
+      const have=new Map();S.teams.forEach(tt=>tt.experiments.forEach(x=>{if(x.id===d.id)x.steps.forEach(q=>q.photos.forEach(p=>have.set(p.id,p.src)))}));
+      const need=[];d.steps.forEach(q=>q.photos.forEach(p=>{if(p&&have.has(p.id))p.src=have.get(p.id);else if(p&&typeof p.id==='string')need.push(p.id)}));
+      const srcs=new Map();
+      for(let i=0;i<need.length;i+=3)(await rpc('ls_get_photos',{p_code:code,p_ids:need.slice(i,i+3)})||[]).forEach(x=>srcs.set(x.photo_id,x.src));
+      d.steps.forEach(q=>q.photos.forEach(p=>{if(p&&!p.src){if(srcs.has(p.id)){p.src=srcs.get(p.id);sy.sent[p.id]=1}else stuck=true}})); // 아직 서버에 없는 사진은 다음 번에 다시 받음
+      const r=takeExp(t,d);
+      if(!r.merged){changed=true;got.ex++;got.ph+=r.n.ph}else if(r.n.ph||r.n.st||r.n.ms||r.n.ob){changed=true;got.ph+=r.n.ph;got.ms+=r.n.ms}
+    }
+    if(!stuck)SYNC.since[code]=row.updated_at;
+  }
+  // 2) 보내기: 새 사진을 먼저 올리고, 글자 부분이 바뀐 실험을 올림
+  for(const e of t.experiments){
+    const k=code+'|'+e.id;
+    for(const q of e.steps)for(const p of q.photos)if(!sy.sent[p.id]){await rpc('ls_push_photo',{p_code:code,p_photo_id:p.id,p_src:p.src});sy.sent[p.id]=1;changed=true}
+    const s=lightExp(e);if(SYNC.sig[k]===s)continue;
+    const at=await rpc('ls_push_exp',{p_code:code,p_exp_id:e.id,p_data:JSON.parse(s),p_base:SYNC.seen[k]||null});
+    if(at){SYNC.seen[k]=at;SYNC.sig[k]=s} // null이면 다른 기기가 먼저 바꾼 것 → 다음 번에 받아서 합친 뒤 다시 올림
+  }
+  return {changed,got};
+}
+async function syncTick(){
+  if(!SYNC.on||SYNC.busy||document.hidden)return;
+  const ts=S.teams.filter(t=>t.sync&&t.sync.code);if(!ts.length)return;
+  SYNC.busy=true;
+  for(const t of ts){
+    try{const r=await syncTeam(t);SYNC.err='';SYNC.last=Date.now();
+      if(r.changed){save();if(r.got.ex||r.got.ph||r.got.ms){softRender();toast(`팀원의 기록이 들어왔어요${r.got.ex?` · 새 실험 ${r.got.ex}개`:''}${r.got.ph?` · 사진 ${r.got.ph}장`:''}${r.got.ms?` · 측정값 ${r.got.ms}개`:''}`)}}
+    }catch(err){SYNC.err=String(err&&err.message||err)}
+  }
+  SYNC.busy=false;const el=$('#syncst');if(el)el.textContent=syncStatus();
+}
+setInterval(syncTick,4000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncTick()});
+Object.assign(A,{
+  syncNew(){const t=team();t.sync={code:fmtCode(code()+code().slice(0,4)),sent:{}};save();render();syncTick();toast('공유를 시작했어요 · 코드를 팀원에게 알려 주세요')},
+  syncJoin(){const raw=$('#sync-code').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(raw.length!==12){$('#sync-code').focus();return toast('코드 12자리를 입력하세요')}
+    const t=team();t.sync={code:fmtCode(raw),sent:{}};save();document.activeElement&&document.activeElement.blur();render();syncTick();toast('참여했어요 · 곧 팀의 기록을 받아 와요')},
+  syncOff(el){if(!el.classList.contains('arm')){el.classList.add('arm');el.style.color='#C2504A';el.textContent='한 번 더 누르면 꺼요';return}
+    const t=team();delete t.sync;save();render();toast('공유를 껐어요 · 지금까지 받은 기록은 이 기기에 남아요')},
+  async syncCopy(){const c=(team().sync||{}).code||'';try{await navigator.clipboard.writeText(c);toast('코드를 복사했어요')}catch(_){toast('복사하지 못했어요 · 코드를 길게 눌러 복사하세요')}}
+});
 
 /* ---------- boot ---------- */
 (async()=>{
