@@ -2271,7 +2271,7 @@ function aiBox(){
    같은 팀 코드를 쓰는 기기끼리 실험 기록을 서버(Supabase)를 거쳐 주고받는다.
    실험 글자 부분과 사진을 따로 보낸다. 사진은 한 번만 올리고, 받는 쪽은 자기 기기에 없는 사진만 받는다.
    받은 기록은 "받은 파일 합치기"와 같은 규칙(mergeExp)으로 합친다. 지운 것은 전달되지 않는다. */
-const SYNC={on:!IN_CLAUDE,url:'https://yehtixmnykkqscocuodd.supabase.co/rest/v1/rpc/',key:'sb_publishable_WbPp9JgPgmI2jQN2jcPLRA_QlaRal89',busy:false,sig:{},seen:{},since:{},last:0,err:'',wantRender:false};
+const SYNC={on:!IN_CLAUDE,url:'https://dcdouvblzxviezpfybqp.supabase.co/rest/v1/rpc/',key:'sb_publishable_BcugeNbsqfFxbq5CLLp5Kw_teDU7z2f',busy:false,sig:{},seen:{},since:{},last:0,err:'',wantRender:false};
 async function rpc(fn,body){
   const r=await fetch(SYNC.url+fn,{method:'POST',headers:{apikey:SYNC.key,Authorization:'Bearer '+SYNC.key,'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(!r.ok)throw new Error('sync '+r.status);const t=await r.text();return t?JSON.parse(t):null}
