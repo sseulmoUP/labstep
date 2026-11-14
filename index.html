@@ -75,6 +75,7 @@ input,textarea{font:inherit;color:inherit}
 .authtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
 .authbox .gf{padding:12px 0 0}
 .autherr{min-height:20px;margin-top:10px;font-size:14px;color:var(--danger)}
+.codechip{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:10px 14px;border:1px dashed var(--line2);border-radius:14px}.codechip b{flex:1;font-size:14px;letter-spacing:.02em;white-space:nowrap}
 .off{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line2);margin-right:6px;vertical-align:1px}
 .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2DB36A;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 3px rgba(45,179,106,.18)}
 
@@ -89,6 +90,14 @@ input,textarea{font:inherit;color:inherit}
 .members{display:flex;align-items:center;gap:0;padding:14px 18px;border-bottom:1px solid var(--line);width:100%;text-align:left}
 .av{width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);display:grid;place-items:center;font-size:12px;letter-spacing:-.04em;font-weight:700;background:#fff;margin-right:-6px}
 .av.me{background:var(--orange)}
+.av{overflow:hidden}.av img{width:100%;height:100%;object-fit:cover;display:block}
+.mechip{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.mechip .av{margin:0;width:44px;height:44px;font-size:14px}
+.mechip .n{flex:1;min-width:0}.mechip .n b{font-size:16px}.mechip .n div{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-av{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 18px 4px}
+.pf-av .av{margin:0;width:96px;height:96px;font-size:26px}
+.pf-av .row{display:flex;gap:8px}
+.pf-count{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
 .members span.txt{margin-left:16px;font-size:14px;color:var(--muted);flex:1}
 .empty{padding:40px 24px;text-align:center;color:var(--muted);font-size:15px;line-height:1.6}
 .empty .big{width:56px;height:56px;margin:0 auto 14px;border:1.5px dashed var(--line2);display:grid;place-items:center}
@@ -712,7 +721,7 @@ const EXTRACT2={
 };
 
 function defaultState(){
-  return {loggedIn:false,me:{name:''},teams:[{id:'t1',name:'무기화학실험 2조',course:'무기화학실험',experiments:[]}]};
+  return {loggedIn:false,me:{name:''},teams:[]};
 }
 
 // 초대 링크는 주소 끝에 #팀코드가 붙어 있음. 읽어 두고 주소에서는 지움
@@ -749,10 +758,14 @@ const topbar=(title,right='')=>`<div class="top"><button class="iconbtn" data-a=
 // 동그라미 안 글자: 한글 이름은 뒤 두 글자(보영), 영문 이름은 낱말의 첫 글자(BY)
 const initial=n=>{n=String(n||'').trim();return esc(/[가-힣]/.test(n)?n.replace(/[^가-힣]/g,'').slice(-2):n.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase())};
 
+// 프로필 사진이 있으면 사진, 없으면 이름 글자
+const avHtml=(name,avatar,cls='')=>`<span class="av ${cls}">${avatar&&/^data:image\//.test(avatar)?`<img src="${avatar}" alt="">`:initial(name)}</span>`;
+const myAv=()=>S.me&&S.me.avatar||'';
+
 /* ---------- render ---------- */
 const $=s=>document.querySelector(s);
 function render(){
-  const f={login,signup:login,teams,team:teamV,members,add,exp:expV,step:stepV,edit:editV}[V.name];
+  const f={login,signup:login,profile:profileV,teams,team:teamV,members,add,exp:expV,step:stepV,edit:editV}[V.name];
   $('#phone').innerHTML=f();
   if(V.focusNew){const el=document.querySelector('.ph.new input');if(el){el.scrollIntoView({block:'center'});setTimeout(()=>el.focus(),250)}V.focusNew=false}
 }
@@ -779,14 +792,30 @@ function login(){
   </div>`;
 }
 
+function profileV(){
+  const m=S.me||{},av=V.pfAvatar!==undefined?V.pfAvatar:(m.avatar||'');
+  return `${topbar('내 정보')}
+  <div class="content">
+   <div class="pf-av">${avHtml(m.name,av,'me')}
+     <div class="row"><button class="mini" data-a="pickAvatar">${av?'사진 바꾸기':'사진 넣기'}</button>${av?'<button class="mini" data-a="clearAvatar">사진 지우기</button>':''}</div></div>
+   <div class="gf"><label class="label">아이디</label><input value="${esc(m.id||'')}" disabled></div>
+   <div class="gf"><label class="label" for="pf-name">이름 · 사진과 메모에 남아요</label><input id="pf-name" value="${esc(m.name||'')}" maxlength="20" autocomplete="name"></div>
+   <div class="gf"><label class="label" for="pf-bio">한줄소개 · 소속, 학번 등</label><input id="pf-bio" value="${esc(m.bio||'')}" maxlength="60" placeholder="예: 화학과 24학번 · 무기화학실험 2조"><div class="pf-count">최대 60자</div></div>
+   ${m.token?'':`<div class="hint" style="padding:10px 18px 0">내 정보를 바꾸려면 로그아웃한 뒤 다시 로그인해 주세요.</div>`}
+   <div class="pad"><button class="btn black" data-a="saveProfile" id="pf-save">저장하기</button>
+   <div style="text-align:center;margin-top:16px"><button class="mini" data-a="logout">로그아웃</button></div></div>
+  </div>`;
+}
+
 function teams(){
   return `<div class="top"><div class="logo" style="padding-left:10px;flex:1"><div class="logo-mark" style="width:28px;height:28px">${I.flask}</div><b style="font-size:17px">LabStep</b></div><button class="mini" data-a="logout">로그아웃</button></div>
   <div class="content">
-   <div class="pad" style="padding-bottom:0"><div style="font-size:15px"><b>${esc(ME)}</b> 님</div><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">${SYNC.on?'팀원에게 코드를 받았으면 아래에 넣어 참여하세요. 새 팀은 맨 아래 "팀 만들기"로 만들어요.':'팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.'}</div></div>
+   <div class="pad" style="padding-bottom:0"><button class="mechip" data-a="profile">${avHtml(ME,myAv(),'me')}<div class="n"><b>${esc(ME)}</b><div>${S.me&&S.me.bio?esc(S.me.bio):'한줄소개를 적어 보세요'}</div></div><span class="label">내 정보 ›</span></button><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">${SYNC.on?'팀원에게 코드를 받았으면 아래에 넣어 참여하세요. 새 팀은 맨 아래 "팀 만들기"로 만들어요.':'팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.'}</div></div>
    ${SYNC.on?`<div class="aibox"><div class="t">팀 코드로 참여하기</div><div class="d">팀원에게 받은 12자리 코드를 넣으면, 그 팀의 실험과 사진이 이 기기에 나타나요.</div>
      <div class="gf" style="padding:12px 0 0"><input id="join-code" placeholder="예: K7M2-Q9XF-3HTA" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" aria-label="팀 코드"></div>
      <button class="btn orange" data-a="joinTeam" style="margin-top:10px">참여하기</button></div>`:''}
    <div class="sect-h"><span class="label">내 팀</span><span class="label">${S.teams.length}</span></div>
+   ${S.teams.length?'':`<div class="empty" style="padding:24px">아직 팀이 없어요.<br>아래 <b>팀 만들기</b>로 새 팀을 만들거나, 팀원에게 받은 코드로 참여하세요.</div>`}
    ${S.teams.map(t=>{const n=t.experiments.length;return `<button class="card" data-a="openTeam" data-id="${t.id}">
      <div class="t">${esc(t.name)}</div><div class="s">팀원 ${membersOf(t)?membersOf(t).length:1}명 · 실험 ${n}개${t.sync&&t.sync.code?' · 실시간 공유 중':''}</div></button>`}).join('')}
    <div class="pad" style="text-align:center"><button class="mini" data-a="allFile">전체 백업 파일 만들기</button> &nbsp;·&nbsp; <button class="mini" data-a="impPick">백업·실험 파일 가져오기</button><br><button class="mini" data-a="reset" style="margin-top:14px">기록 모두 지우기</button></div>
@@ -794,7 +823,7 @@ function teams(){
   <div class="bottom"><button class="btn black" data-a="newTeam">${I.plus}팀 만들기</button></div>`;
 }
 
-function avRow(t){const m=membersOf(t);if(m)return m.slice(0,5).map(x=>`<span class="av ${x.uid===myUid()?'me':''}">${initial(x.uname)}</span>`).join('');return `<span class="av me">${initial(ME)}</span>`}
+function avRow(t){const m=membersOf(t);if(m)return m.slice(0,5).map(x=>avHtml(x.uname,x.uid===myUid()?myAv():x.avatar,x.uid===myUid()?'me':'')).join('');return avHtml(ME,myAv(),'me')}
 function progress(e){const d=e.steps.filter(s=>s.photos.length).length;return [d,e.steps.length]}
 
 function teamV(){
@@ -802,6 +831,7 @@ function teamV(){
   return `${topbar(esc(t.name),`<button class="iconbtn" data-a="members" aria-label="팀원">${I.users}</button>`)}
   <div class="content">
    <button class="members" data-a="members">${avRow(t)}<span class="txt">${membersOf(t)?`<span class="live"></span>팀원 ${membersOf(t).length}명 · 지금 접속 ${onlineOf(t).length}명`:t.sync&&t.sync.code?'팀원 불러오는 중…':'팀원 1명 · 아직 공유 전'}</span><span class="mono" style="font-size:12px">›</span></button>
+   ${t.sync&&t.sync.code?`<div class="codechip"><span class="label">참여 코드</span><b class="mono">${esc(t.sync.code)}</b><button class="mini" data-a="syncCopy">복사</button><button class="mini" data-a="syncLink">초대 링크</button></div>`:''}
    <div class="sect-h"><span class="label">실험</span><span class="label">${t.experiments.length}</span></div>
    ${t.experiments.length?t.experiments.map(e=>{const [d,n]=progress(e);const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);return `<button class="card" data-a="openExp" data-id="${e.id}">
       <div class="label">${esc(e.no)} · ${fmtDate(e.created)}</div>
@@ -817,9 +847,9 @@ function teamV(){
 function members(){
   const t=team(),ms=membersOf(t),me=myUid();
   const acct=S.me&&S.me.src==='account'?`계정 ${esc(S.me.id)}`:'직접 적은 이름';
-  const list=ms?ms.map(x=>`<div class="mem"><span class="av ${x.uid===me?'me':''}">${initial(x.uname)}</span>
-     <div class="n"><b>${esc(x.uname)}</b> ${x.uid===me?'<span class="tag o">나</span>':''}<div>${x.online?'<span class="live"></span>지금 접속 중':'<span class="off"></span>접속 안 함'}${/^guest-/.test(x.uid)?'':` · ${esc(x.uid)}`}</div></div></div>`).join('')
-    :`<div class="mem"><span class="av me">${initial(ME)}</span><div class="n"><b>${esc(ME)}</b> <span class="tag o">나</span><div>${acct}</div></div></div>`;
+  const list=ms?ms.map(x=>{const mine=x.uid===me;return `<div class="mem" ${mine?'data-a="profile" style="cursor:pointer"':''}>${avHtml(x.uname,mine?myAv():x.avatar,mine?'me':'')}
+     <div class="n"><b>${esc(x.uname)}</b> ${mine?'<span class="tag o">나</span>':''}<div>${(mine?S.me.bio:x.bio)?esc(mine?S.me.bio:x.bio)+' · ':''}${x.online?'<span class="live"></span>접속 중':'<span class="off"></span>접속 안 함'}</div></div></div>`}).join('')
+    :`<div class="mem" data-a="profile" style="cursor:pointer">${avHtml(ME,myAv(),'me')}<div class="n"><b>${esc(ME)}</b> <span class="tag o">나</span><div>${S.me&&S.me.bio?esc(S.me.bio):acct}</div></div></div>`;
   return `${topbar('팀원')}
   <div class="content">
    <div class="sect-h"><span class="label">팀원${ms?' · 코드로 참여한 사람':''}</span><span class="label">${ms?`${ms.length}명 · 접속 ${ms.filter(x=>x.online).length}명`:'1명'}</span></div>
@@ -971,6 +1001,9 @@ async function toDataURL(file,max=1600){
   const im=await loadImg(file);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
   const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(im.src);return c.toDataURL('image/jpeg',.82);
 }
+// 프로필 사진: 가운데를 정사각형으로 잘라 작게 줄임
+async function avatarURL(file){const im=await loadImg(file),w=im.naturalWidth,h=im.naturalHeight,s=Math.min(w,h),N=112;
+  const c=document.createElement('canvas');c.width=N;c.height=N;c.getContext('2d').drawImage(im,(w-s)/2,(h-s)/2,s,s,0,0,N,N);URL.revokeObjectURL(im.src);return c.toDataURL('image/jpeg',.8)}
 function samplePhoto(){ // 팀원 예시 사진(그림)
   const c=document.createElement('canvas');c.width=900;c.height=900;const x=c.getContext('2d');
   x.fillStyle='#EDEBE6';x.fillRect(0,0,900,900);
@@ -1033,7 +1066,7 @@ async function authGo(su){
   let st=await DB.get('state:'+u.id);
   if(!(st&&st.teams)){const old=await DB.get('state'),taken=await DB.get('legacyTaken'); // 로그인 기능 전에 이 기기에 쌓인 기록은 처음 로그인한 계정이 가져감
     if(old&&old.teams&&!taken&&old.teams.some(t=>t.experiments.length||t.sync)){st=old;DB.put(1,'legacyTaken')}else st=defaultState()}
-  resetSyncCache();S=st;S.me={name:u.name,id:u.id,src:'account'};ME=u.name;S.loggedIn=true;saveNow();DB.put(u.id,'cur');hist.length=0;
+  resetSyncCache();S=st;S.me={name:u.name,id:u.id,src:'account',token:u.token||'',bio:u.bio||'',avatar:u.avatar||''};ME=u.name;S.loggedIn=true;saveNow();DB.put(u.id,'cur');hist.length=0;
   if(PENDING&&SYNC.on){const c=PENDING;PENDING='';return joinByCode(c)}
   go({name:'teams'},false);toast(`<b>${esc(u.name)}</b> 님, ${su?'가입을 환영해요':'반가워요'}`);
 }
@@ -1043,8 +1076,23 @@ const A={
   login(){authGo(false)},
   signup(){authGo(true)},
   toLogin(){if(V.name!=='login'){V={name:'login'};render()}},
+  profile(){go({name:'profile'})},
+  pickAvatar(){const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=async()=>{const x=f.files&&f.files[0];if(!x)return;
+    try{V.pfAvatar=await avatarURL(x);render()}catch(_){toast('사진을 열지 못했어요')}};f.click()},
+  clearAvatar(){V.pfAvatar='';render()},
+  async saveProfile(){
+    const m=S.me||{};if(!m.token)return toast('다시 로그인한 뒤 바꿀 수 있어요');
+    const name=($('#pf-name').value||'').trim(),bio=($('#pf-bio').value||'').trim(),avatar=V.pfAvatar!==undefined?V.pfAvatar:(m.avatar||'');
+    if(!name){$('#pf-name').focus();return toast('이름을 입력하세요')}
+    const b=$('#pf-save');if(b){b.disabled=true;b.textContent='저장하는 중…'}
+    let u=null;try{u=await rpc('ls_update_profile',{p_token:m.token,p_name:name,p_bio:bio,p_avatar:avatar})}catch(_){}
+    if(!u){if(b){b.disabled=false;b.textContent='저장하기'}return toast('저장하지 못했어요 · 로그아웃 후 다시 로그인해 보세요')}
+    const old=ME;
+    if(u.name!==old)S.teams.forEach(t=>t.experiments.forEach(e=>e.steps.forEach(q=>{q.photos.forEach(ph=>{if(ph.by===old)ph.by=u.name});if(q.obs&&q.obs.by===old)q.obs.by=u.name;(q.meas||[]).forEach(x=>{if(x.by===old)x.by=u.name})})));
+    S.me=Object.assign({},m,{name:u.name,bio:u.bio||'',avatar:u.avatar||''});ME=u.name;V.pfAvatar=undefined;saveNow();
+    toast('내 정보를 저장했어요');back()},
   toSignup(){if(V.name!=='signup'){V={name:'signup'};render()}},
-  joinTeam(){const inp=$('#join-code');if(!joinByCode(inp?inp.value:'')&&inp)inp.focus()},
+  async joinTeam(){const inp=$('#join-code');if(!(await joinByCode(inp?inp.value:''))&&inp)inp.focus()},
   // 처음 화면(팀 목록)으로 한 번에 돌아가기
   home(){hist.length=0;go({name:'teams'},false)},
   // 첫 화면(이름 적는 화면)으로 나가기. 기록은 그대로 남음
@@ -1058,9 +1106,13 @@ const A={
     d.querySelector('[data-x=no]').onclick=()=>d.remove();d.querySelector('[data-x=yes]').onclick=()=>{d.remove();S=defaultState();save();hist.length=0;V={name:'login'};render()}},
   openTeam(el){go({name:'team',tid:el.dataset.id})},
   openExp(el){go({name:'exp',tid:V.tid,eid:el.dataset.id,tab:'steps'})}, // 실험 목록에서 실험 다시 열기
-  newTeam(){const d=sheet(`<h3>팀 만들기</h3><p>실험을 묶어 둘 팀을 하나 더 만들어요.</p><input placeholder="예: 무기화학실험 3조" id="tn"><button class="btn black" data-x="ok">만들기</button>`);
+  newTeam(){const d=sheet(`<h3>팀 만들기</h3><p>팀을 만들면 참여 코드가 바로 생겨요. 코드를 팀원에게 알려 주면 같은 팀으로 기록을 함께 써요.</p><input placeholder="예: 무기화학실험 3조" id="tn" maxlength="30"><button class="btn black" data-x="ok">만들기</button>`);
     const inp=d.querySelector('#tn');setTimeout(()=>inp.focus(),100);
-    d.querySelector('[data-x=ok]').onclick=()=>{const n=inp.value.trim();if(!n){inp.focus();return}const t={id:uid(),name:n,course:'',experiments:[]};S.teams.push(t);save();d.remove();go({name:'team',tid:t.id});toast('팀을 만들었어요')}},
+    d.querySelector('[data-x=ok]').onclick=async()=>{const n=inp.value.trim();if(!n){inp.focus();return}
+      const b=d.querySelector('[data-x=ok]');b.disabled=true;b.textContent='만드는 중…';
+      const c=fmtCode(code()+code().slice(0,4));
+      try{await rpc('ls_room_create',{p_code:c,p_name:n,p_id:myUid()})}catch(_){b.disabled=false;b.textContent='만들기';return toast('팀을 만들지 못했어요 · 인터넷 연결을 확인하세요')}
+      const t={id:uid(),name:n,course:'',experiments:[],sync:{code:c,sent:{}}};S.teams.push(t);saveNow();d.remove();go({name:'team',tid:t.id});syncTick();toast('팀을 만들었어요 · 참여 코드를 팀원에게 알려 주세요')}},
   members(){go({name:'members',tid:V.tid})},
   addExp(){go({name:'add',tid:V.tid,stage:'pick'})},
   pickDoc(){const d=$('#doc');d.value='';d.click()},
@@ -2346,11 +2398,11 @@ const syncStatus=()=>SYNC.err?'연결이 안 돼요 · 다시 시도하는 중�
 function syncBox(t){
   if(!SYNC.on)return `<div class="hint">기록은 이 기기에 저장돼요. 팀원과 같이 쓰려면 실험의 "결과 모아보기" 맨 아래에서 <b>실험 파일</b>을 만들어 보내세요. 받은 사람이 "받은 파일 합치기"를 누르면 사진·메모·측정값이 합쳐져요.</div>`;
   const sy=t.sync;
-  if(sy&&sy.code)return `<div class="secname">실시간 공유 · 켜져 있어요</div>
-   <div class="linkbox"><div class="u" id="synccode">${esc(sy.code)}</div><div class="r"><button class="o" data-a="syncCopy">코드 복사</button><button data-a="syncOff">공유 끄기</button></div></div>
+  if(sy&&sy.code)return `<div class="secname">팀 참여 코드</div>
+   <div class="linkbox"><div class="u" id="synccode">${esc(sy.code)}</div><div class="r"><button class="o" data-a="syncCopy">코드 복사</button><button data-a="syncLink">초대 링크 복사</button></div></div>
    <div class="gnote" id="syncst">${syncStatus()}</div>
-   <div class="grow"><button class="btn orange sm" data-a="syncLink">초대 링크 복사</button></div>
-   <div class="hint">팀원에게 초대 링크를 보내면, 로그인하면 바로 이 팀에 들어와요. 코드를 직접 알려 줄 때는 팀원이 이 사이트를 열고 첫 화면 다음에 나오는 "팀 코드로 참여하기"에 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
+   <div class="hint">팀원에게 초대 링크를 보내면, 로그인하면 바로 이 팀에 들어와요. 코드를 직접 알려 줄 때는 팀원이 이 사이트를 열고 첫 화면 다음에 나오는 "팀 코드로 참여하기"에 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>
+   <div class="pad" style="text-align:center"><button class="mini" data-a="leaveTeam" style="color:var(--danger)">팀 나가기</button></div>`;
   return `<div class="secname">실시간 공유</div>
    <div class="gnote" style="padding-top:4px">같은 팀 코드를 쓰는 기기끼리 사진·메모·측정값을 자동으로 주고받아요. 휴대폰으로 찍은 사진이 컴퓨터 화면에 바로 나타나요.</div>
    <div class="grow"><button class="btn black" data-a="syncNew">이 팀의 공유 시작하기</button></div>
@@ -2429,11 +2481,13 @@ async function syncTick(){
 setInterval(syncTick,4000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncTick()});
 // 코드로 팀에 참여: 그 코드의 팀이 이 기기에 없으면 새로 만들어 연결하고, 바로 그 팀 화면으로 감
-function joinByCode(input){
+async function joinByCode(input){
   const raw=String(input||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(raw.length!==12){toast('코드 12자리를 입력하세요');return false}
   const c=fmtCode(raw);let t=S.teams.find(x=>x.sync&&x.sync.code===c);
-  if(!t){t={id:uid(),name:'참여한 팀',course:'',experiments:[],sync:{code:c,sent:{}},joined:true};
+  if(!t){let nm=null;try{nm=await rpc('ls_room_get',{p_code:c})}catch(_){toast('서버에 연결하지 못했어요 · 잠시 뒤 다시');return false}
+    if(!nm){toast('없는 코드예요 · 코드를 다시 확인하세요');return false}
+    t={id:uid(),name:nm,course:'',experiments:[],sync:{code:c,sent:{}},joined:true};
     S.teams=S.teams.filter(x=>!(x.id==='t1'&&!x.experiments.length&&!x.sync)); // 처음부터 있던 빈 팀은 치움
     S.teams.unshift(t)}
   save();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
@@ -2448,7 +2502,14 @@ Object.assign(A,{
     if(!el.classList.contains('arm')){el.classList.add('arm');el.style.color='#C2504A';el.textContent='한 번 더 누르면 사진과 기록이 모두 지워져요';setTimeout(()=>{if(el.isConnected){el.classList.remove('arm');el.style.color='';el.textContent='이 실험 지우기'}},3500);return}
     t.experiments=t.experiments.filter(x=>x.id!==e.id);if(t.sync){t.sync.gone=t.sync.gone||{};t.sync.gone[e.id]=1}
     save();hist.length=0;hist.push({name:'teams'});V={name:'team',tid:t.id};render();window.scrollTo(0,0);toast(`<b>${esc(e.title)}</b> 실험을 지웠어요`)},
-  syncNew(){const t=team();t.sync={code:fmtCode(code()+code().slice(0,4)),sent:{}};save();render();syncTick();toast('공유를 시작했어요 · 코드를 팀원에게 알려 주세요')},
+  async syncNew(){const t=team(),c=fmtCode(code()+code().slice(0,4));try{await rpc('ls_room_create',{p_code:c,p_name:t.name,p_id:myUid()})}catch(_){return toast('코드를 만들지 못했어요 · 인터넷 연결을 확인하세요')}
+    t.sync={code:c,sent:{}};save();render();syncTick();toast('참여 코드를 만들었어요 · 팀원에게 알려 주세요')},
+  leaveTeam(){const t=team();if(!t)return;
+    const d=sheet(`<h3>팀에서 나갈까요?</h3><p><b>${esc(t.name)}</b> 팀에서 나가면 이 기기에 있는 이 팀의 <b>실험 기록과 사진이 모두 지워져요.</b> 다시 들어오려면 참여 코드가 필요해요.<br><br>정말 나가시겠어요?</p><div class="row"><button class="btn ghost" data-x="no">취소</button><button class="btn black" data-x="yes" style="background:var(--danger);border-color:var(--danger)">나가기</button></div>`);
+    d.querySelector('[data-x=no]').onclick=()=>d.remove();
+    d.querySelector('[data-x=yes]').onclick=async()=>{d.remove();const c=t.sync&&t.sync.code;
+      if(c){try{await rpc('ls_leave',{p_code:c,p_id:myUid()})}catch(_){}delete SYNC.online[c]}
+      S.teams=S.teams.filter(x=>x.id!==t.id);saveNow();hist.length=0;go({name:'teams'},false);toast(`<b>${esc(t.name)}</b> 팀에서 나갔어요`)}},
   syncJoin(){const raw=$('#sync-code').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(raw.length!==12){$('#sync-code').focus();return toast('코드 12자리를 입력하세요')}
     const t=team();t.sync={code:fmtCode(raw),sent:{}};save();document.activeElement&&document.activeElement.blur();render();syncTick();toast('참여했어요 · 곧 팀의 기록을 받아 와요')},
   syncOff(el){if(!el.classList.contains('arm')){el.classList.add('arm');el.style.color='#C2504A';el.textContent='한 번 더 누르면 꺼요';return}
