@@ -75,6 +75,7 @@ input,textarea{font:inherit;color:inherit}
 .authtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
 .authbox .gf{padding:12px 0 0}
 .autherr{min-height:20px;margin-top:10px;font-size:14px;color:var(--danger)}
+.off{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line2);margin-right:6px;vertical-align:1px}
 .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2DB36A;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 3px rgba(45,179,106,.18)}
 
 /* lists */
@@ -725,10 +726,14 @@ window.addEventListener('hashchange',()=>{const c=readInvite();if(!c||!SYNC.on)r
 let S=defaultState();
 const DB={db:null,
   open(){return new Promise(res=>{try{const r=indexedDB.open('labstep-demo',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{this.db=r.result;res(true)};r.onerror=()=>res(false)}catch(e){res(false)}})},
-  get(){return new Promise(res=>{try{const t=this.db.transaction('kv').objectStore('kv').get('state');t.onsuccess=()=>res(t.result||null);t.onerror=()=>res(null)}catch(e){res(null)}})},
-  put(v){try{this.db&&this.db.transaction('kv','readwrite').objectStore('kv').put(v,'state')}catch(e){}}
+  get(k='state'){return new Promise(res=>{try{const t=this.db.transaction('kv').objectStore('kv').get(k);t.onsuccess=()=>res(t.result||null);t.onerror=()=>res(null)}catch(e){res(null)}})},
+  put(v,k='state'){try{this.db&&this.db.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}
 };
-let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>DB.put(JSON.parse(JSON.stringify(S))),300)}
+// 계정마다 저장 공간을 따로 씀: state:<아이디>
+const stKey=()=>S.me&&S.me.src==='account'&&S.me.id?'state:'+S.me.id:'state';
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>DB.put(JSON.parse(JSON.stringify(S)),stKey()),300)}
+function saveNow(){clearTimeout(saveT);DB.put(JSON.parse(JSON.stringify(S)),stKey())}
+function resetSyncCache(){SYNC.sig={};SYNC.seen={};SYNC.since={};SYNC.online={}}
 
 /* ---------- nav ---------- */
 let V={name:'login'};const hist=[];
@@ -783,20 +788,20 @@ function teams(){
      <button class="btn orange" data-a="joinTeam" style="margin-top:10px">참여하기</button></div>`:''}
    <div class="sect-h"><span class="label">내 팀</span><span class="label">${S.teams.length}</span></div>
    ${S.teams.map(t=>{const n=t.experiments.length;return `<button class="card" data-a="openTeam" data-id="${t.id}">
-     <div class="t">${esc(t.name)}</div><div class="s">기록한 사람 ${people(t).length}명 · 실험 ${n}개${t.sync&&t.sync.code?' · 실시간 공유 중':''}</div></button>`}).join('')}
+     <div class="t">${esc(t.name)}</div><div class="s">팀원 ${membersOf(t)?membersOf(t).length:1}명 · 실험 ${n}개${t.sync&&t.sync.code?' · 실시간 공유 중':''}</div></button>`}).join('')}
    <div class="pad" style="text-align:center"><button class="mini" data-a="allFile">전체 백업 파일 만들기</button> &nbsp;·&nbsp; <button class="mini" data-a="impPick">백업·실험 파일 가져오기</button><br><button class="mini" data-a="reset" style="margin-top:14px">기록 모두 지우기</button></div>
   </div>
   <div class="bottom"><button class="btn black" data-a="newTeam">${I.plus}팀 만들기</button></div>`;
 }
 
-function avRow(t){return people(t).slice(0,5).map(m=>`<span class="av ${m.me?'me':''}">${initial(m.name)}</span>`).join('')}
+function avRow(t){const m=membersOf(t);if(m)return m.slice(0,5).map(x=>`<span class="av ${x.uid===myUid()?'me':''}">${initial(x.uname)}</span>`).join('');return `<span class="av me">${initial(ME)}</span>`}
 function progress(e){const d=e.steps.filter(s=>s.photos.length).length;return [d,e.steps.length]}
 
 function teamV(){
   const t=team();
   return `${topbar(esc(t.name),`<button class="iconbtn" data-a="members" aria-label="팀원">${I.users}</button>`)}
   <div class="content">
-   <button class="members" data-a="members">${avRow(t)}<span class="txt">${onlineOf(t)?`<span class="live"></span>참여 중 ${onlineOf(t).length}명 · ${onlineOf(t).map(o=>esc(o.uname)).join(', ')}`:`기록한 사람 ${people(t).length}명${t.sync&&t.sync.code?' · 실시간 공유 중':''}`}</span><span class="mono" style="font-size:12px">›</span></button>
+   <button class="members" data-a="members">${avRow(t)}<span class="txt">${membersOf(t)?`<span class="live"></span>팀원 ${membersOf(t).length}명 · 지금 접속 ${onlineOf(t).length}명`:t.sync&&t.sync.code?'팀원 불러오는 중…':'팀원 1명 · 아직 공유 전'}</span><span class="mono" style="font-size:12px">›</span></button>
    <div class="sect-h"><span class="label">실험</span><span class="label">${t.experiments.length}</span></div>
    ${t.experiments.length?t.experiments.map(e=>{const [d,n]=progress(e);const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);return `<button class="card" data-a="openExp" data-id="${e.id}">
       <div class="label">${esc(e.no)} · ${fmtDate(e.created)}</div>
@@ -810,16 +815,16 @@ function teamV(){
 }
 
 function members(){
-  const t=team(),ps=people(t),fromClaude=!!(S.me&&S.me.src==='claude');
-  const on=onlineOf(t);
+  const t=team(),ms=membersOf(t),me=myUid();
+  const acct=S.me&&S.me.src==='account'?`계정 ${esc(S.me.id)}`:'직접 적은 이름';
+  const list=ms?ms.map(x=>`<div class="mem"><span class="av ${x.uid===me?'me':''}">${initial(x.uname)}</span>
+     <div class="n"><b>${esc(x.uname)}</b> ${x.uid===me?'<span class="tag o">나</span>':''}<div>${x.online?'<span class="live"></span>지금 접속 중':'<span class="off"></span>접속 안 함'}${/^guest-/.test(x.uid)?'':` · ${esc(x.uid)}`}</div></div></div>`).join('')
+    :`<div class="mem"><span class="av me">${initial(ME)}</span><div class="n"><b>${esc(ME)}</b> <span class="tag o">나</span><div>${acct}</div></div></div>`;
   return `${topbar('팀원')}
   <div class="content">
-   ${on?`<div class="sect-h"><span class="label">지금 참여 중</span><span class="label">${on.length}명</span></div>
-   ${on.map(o=>`<div class="mem"><span class="av ${o.uid===(S.me&&S.me.id)?'me':''}">${initial(o.uname)}</span><div class="n"><b>${esc(o.uname)}</b> ${o.uid===(S.me&&S.me.id)?'<span class="tag o">나</span>':''}<div><span class="live"></span>접속 중</div></div></div>`).join('')}`:''}
-   <div class="sect-h"><span class="label">기록한 사람</span><span class="label">${ps.length}명</span></div>
-   ${ps.map(m=>`<div class="mem"><span class="av ${m.me?'me':''}">${initial(m.name)}</span>
-     <div class="n"><b>${esc(m.name)}</b> ${m.me?'<span class="tag o">나</span>':''}<div>${m.me?(fromClaude?'Claude 계정의 이름':S.me&&S.me.src==='account'?`계정 ${esc(S.me.id)}`:'직접 적은 이름'):'사진·메모에 남은 이름'}</div></div>
-     ${m.me&&!fromClaude&&!(S.me&&S.me.src==='account')?`<button class="mini" data-a="rename">이름 바꾸기</button>`:''}</div>`).join('')}
+   <div class="sect-h"><span class="label">팀원${ms?' · 코드로 참여한 사람':''}</span><span class="label">${ms?`${ms.length}명 · 접속 ${ms.filter(x=>x.online).length}명`:'1명'}</span></div>
+   ${list}
+   ${ms?'':`<div class="hint" style="padding:10px 18px 0">아래에서 공유를 시작하고 코드를 알려 주면, 코드로 들어온 팀원이 여기에 나타나요.</div>`}
    ${syncBox(t)}
   </div>`;
 }
@@ -1025,7 +1030,10 @@ async function authGo(su){
     return err(su?'가입하지 못했어요 · 이미 있는 아이디일 수 있어요':'서버에 연결하지 못했어요 · 잠시 뒤 다시 시도하세요')}
   AUTH_BUSY=false;
   if(!u||!u.name){if(b){b.disabled=false;b.textContent='로그인'}return err('아이디 또는 비밀번호가 맞지 않아요')}
-  S.me={name:u.name,id:u.id,src:'account'};ME=u.name;S.loggedIn=true;save();hist.length=0;
+  let st=await DB.get('state:'+u.id);
+  if(!(st&&st.teams)){const old=await DB.get('state'),taken=await DB.get('legacyTaken'); // 로그인 기능 전에 이 기기에 쌓인 기록은 처음 로그인한 계정이 가져감
+    if(old&&old.teams&&!taken&&old.teams.some(t=>t.experiments.length||t.sync)){st=old;DB.put(1,'legacyTaken')}else st=defaultState()}
+  resetSyncCache();S=st;S.me={name:u.name,id:u.id,src:'account'};ME=u.name;S.loggedIn=true;saveNow();DB.put(u.id,'cur');hist.length=0;
   if(PENDING&&SYNC.on){const c=PENDING;PENDING='';return joinByCode(c)}
   go({name:'teams'},false);toast(`<b>${esc(u.name)}</b> 님, ${su?'가입을 환영해요':'반가워요'}`);
 }
@@ -1040,7 +1048,7 @@ const A={
   // 처음 화면(팀 목록)으로 한 번에 돌아가기
   home(){hist.length=0;go({name:'teams'},false)},
   // 첫 화면(이름 적는 화면)으로 나가기. 기록은 그대로 남음
-  logout(){S.loggedIn=false;S.me={name:''};ME='나';save();hist.length=0;go({name:'login'},false)},
+  logout(){saveNow();DB.put(null,'cur');resetSyncCache();S=defaultState();ME='나';hist.length=0;go({name:'login'},false)},
   rename(){const d=sheet(`<h3>이름 바꾸기</h3><p>지금까지 내가 남긴 사진·메모의 이름도 함께 바뀌어요.</p><input id="rn" value="${esc(ME)}" autocomplete="name"><button class="btn black" data-x="ok">바꾸기</button>`);
     const inp=d.querySelector('#rn');setTimeout(()=>inp.focus(),100);
     d.querySelector('[data-x=ok]').onclick=()=>{const n=inp.value.trim(),old=ME;if(!n){inp.focus();return}
@@ -2391,16 +2399,19 @@ async function syncTeam(t){
 }
 // 지금 참여 중인 사람: 몇 초마다 "나 여기 있어" 신호를 보내고, 최근 20초 안에 신호를 보낸 사람 목록을 받음
 SYNC.online={};
-const onlineOf=t=>t&&t.sync&&t.sync.code&&SYNC.online[t.sync.code]?SYNC.online[t.sync.code]:null;
+// 팀 코드로 이 방에 들어온 적 있는 사람 전체(uid, uname, online). 공유 전이면 null
+const membersOf=t=>t&&t.sync&&t.sync.code&&SYNC.online[t.sync.code]?SYNC.online[t.sync.code]:null;
+const onlineOf=t=>{const m=membersOf(t);return m?m.filter(x=>x.online):null};
+const myUid=()=>S.me&&S.me.id?S.me.id:'guest-'+ME;
 async function pingTeam(t){
-  const code=t.sync.code,me=S.me&&S.me.id?S.me.id:'guest-'+ME;
+  const code=t.sync.code,me=myUid();
   const list=await rpc('ls_ping',{p_code:code,p_id:me,p_name:ME})||[];
-  const prev=SYNC.online[code]||[],key=l=>l.map(x=>x.uid).sort().join('|');
+  const prev=SYNC.online[code]||null,key=l=>(l||[]).map(x=>x.uid+(x.online?'+':'-')).sort().join('|');
   SYNC.online[code]=list;
   if(key(prev)!==key(list)){
-    const pid=new Set(prev.map(x=>x.uid)),neu=prev.length?list.filter(x=>!pid.has(x.uid)&&x.uid!==me):[];
-    if(neu.length)toast(`<b>${neu.map(x=>esc(x.uname)).join(', ')}</b> 님이 들어왔어요`);
-    if(['team','members'].includes(V.name))softRender();
+    if(prev){const was=new Set(prev.filter(x=>x.online).map(x=>x.uid)),neu=list.filter(x=>x.online&&!was.has(x.uid)&&x.uid!==me);
+      if(neu.length)toast(`<b>${neu.map(x=>esc(x.uname)).join(', ')}</b> 님이 들어왔어요`)}
+    if(['teams','team','members'].includes(V.name))softRender();
   }
 }
 async function syncTick(){
@@ -2448,7 +2459,7 @@ Object.assign(A,{
 /* ---------- boot ---------- */
 (async()=>{
   render();
-  if(await DB.open()){const st=await DB.get();if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.src==='account'&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
+  if(await DB.open()){const cur=await DB.get('cur'),st=cur?await DB.get('state:'+cur):null;if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.src==='account'&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
     if(S.loggedIn){V={name:'teams'}}render()}}
   if(S.loggedIn&&PENDING&&SYNC.on){const c=PENDING;PENDING='';joinByCode(c)} // 이미 쓰던 사람이 초대 링크를 연 경우
   // Claude에 로그인한 사람이면 그 이름을 씀 (못 가져오면 첫 화면에서 직접 적음)
