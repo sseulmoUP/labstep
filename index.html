@@ -640,6 +640,7 @@ const I={
 };
 
 /* ---------- data ---------- */
+const AIN=(window.claude&&window.claude.use)?'Claude':'Gemini'; // 파일 읽기에 쓰는 AI 이름 (독립 웹사이트에서는 쓸모업 서버를 거쳐 Gemini)
 let ME='나'; // 지금 쓰는 사람의 이름. Claude 계정에서 가져오거나 첫 화면에서 직접 적음
 // 팀에서 기록을 남긴 사람들: 나 + 사진·메모·측정값에 이름이 남은 사람
 function people(t){const out=[ME],add=n=>{if(n&&!out.includes(n))out.push(n)};
@@ -866,7 +867,7 @@ function add(){
    <div class="content">
     <div class="pad" style="padding-bottom:0"><div class="label">1 / 2 · 수업 자료</div><p style="margin-top:8px;font-size:15px;line-height:1.6">실험 PPT나 PDF를 올리면 AI가 <b>실험 과정</b> 부분을 찾아 단계로 나눠요. 나눈 단계는 다음 화면에서 고칠 수 있어요.</p>
       <div class="aiprov" role="group" aria-label="사용할 AI" style="margin:14px 0 0">${Object.keys(AI_PROV).map(k=>`<button class="${k===pv?'on':''}" data-a="aiProv" data-k="${k}" aria-pressed="${k===pv}">${AI_PROV[k].name}</button>`).join('')}</div></div>
-    ${pv==='claude'?`<button class="drop" data-a="pickDoc">${I.doc}<b>PPT · PDF · 사진 올리기</b><span>올린 자료는 Claude로 전송돼요</span></button>`
+    ${pv==='claude'?`<button class="drop" data-a="pickDoc">${I.doc}<b>PPT · PDF · 사진 올리기</b><span>올린 자료는 ${AIN}로 전송돼요</span></button>`
      :`<div class="aibox"><ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy" data-k="steps">지시문 복사</button></li>
         <li>${P.name}를 열어 실험 PPT나 PDF를 첨부하고, 복사한 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li>
         <li>${P.name}의 답을 통째로 복사해서 아래 칸에 붙여넣어요.</li></ol>
@@ -885,7 +886,7 @@ function add(){
       <div class="g2" style="grid-template-columns:110px minmax(0,1fr);margin-top:2px"><div class="gf"><label class="label" for="d-no">실험 번호</label><input id="d-no" data-d="no" value="${esc(dr.no)}" placeholder="예: 실험 3"></div><div class="gf"><label class="label" for="d-title">제목</label><input id="d-title" data-d="title" value="${esc(dr.title)}"></div></div>
       ${dr.goal?`<div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">${esc(dr.goal)}</div>`:''}
       <div style="font-size:12px;margin-top:10px"><span class="tag o">${dr.steps.length}단계</span> &nbsp;틀린 부분은 바로 고칠 수 있어요</div></div>
-    ${dr.ai?`<div class="hint" style="margin-top:14px">${esc(dr.who||'Claude')}가 자료를 읽고 나눈 단계예요. 시약의 양과 순서가 자료와 맞는지 확인하세요.${dr.notes?`<br>메모: ${esc(dr.notes)}`:''}</div>`:''}
+    ${dr.ai?`<div class="hint" style="margin-top:14px">${esc(dr.who||AIN)}가 자료를 읽고 나눈 단계예요. 시약의 양과 순서가 자료와 맞는지 확인하세요.${dr.notes?`<br>메모: ${esc(dr.notes)}`:''}</div>`:''}
     ${editorHTML(dr.steps)}
    </div>
    <div class="bottom"><button class="btn orange" data-a="createExp">이 단계로 시작하기</button></div>`;
@@ -1603,7 +1604,7 @@ function gIn(g,e){
     `<div class="grow"><button class="btn black sm" data-a="gRead">표 읽기</button><button class="btn ghost sm" data-a="gSample">예시 표 넣기</button></div>`+
     `<div class="gnote">조건은 열마다 하나씩 나눠 적어요. "0.1 M + KSCN 5 mL"를 한 칸에 쓰지 말고 농도 열과 부피 열로 나눠요.</div>`;
   if(V.gmsg)out+=`<div class="hint">${esc(V.gmsg)}</div>`;
-  if(V.gai&&V.gparsed)out+=`<div class="hint">Claude가 <b>${V.gai.n}줄</b>을 읽어서 위 칸에 채웠어요 (${esc(V.gai.used.slice(0,4).join(', '))}${V.gai.used.length>4?' 등':''}). 숫자를 잘못 읽었을 수 있으니 자료와 맞는지 확인하세요. 위 칸에서 고친 뒤에는 "표 읽기"를 다시 눌러요.${(V.gai.skipped||[]).length?`<br>한 번에 보낼 수 있는 그림 수를 넘어서 사진 ${V.gai.skipped.length}장은 빼고 읽었어요. 나눠서 다시 올려 주세요.`:''}${V.gai.notes?`<br>Claude의 메모: ${esc(V.gai.notes)}`:''}</div>`;
+  if(V.gai&&V.gparsed)out+=`<div class="hint">${AIN}가 <b>${V.gai.n}줄</b>을 읽어서 위 칸에 채웠어요 (${esc(V.gai.used.slice(0,4).join(', '))}${V.gai.used.length>4?' 등':''}). 숫자를 잘못 읽었을 수 있으니 자료와 맞는지 확인하세요. 위 칸에서 고친 뒤에는 "표 읽기"를 다시 눌러요.${(V.gai.skipped||[]).length?`<br>한 번에 보낼 수 있는 그림 수를 넘어서 사진 ${V.gai.skipped.length}장은 빼고 읽었어요. 나눠서 다시 올려 주세요.`:''}${V.gai.notes?`<br>${AIN}의 메모: ${esc(V.gai.notes)}`:''}</div>`;
   if(V.gparsed){
     out+=`<div class="gh">열마다 역할 지정</div><div class="gnote">자동으로 추정했어요. 틀린 곳만 바꾸세요. 조건도 결과도 아닌 열(계산값 등)은 "무시"로 두세요.</div><div style="margin-top:10px;border-top:1px solid var(--line)">`+
       V.gparsed.header.map((h,i)=>`<div class="grole"><div class="n"><b>${esc(h)}</b><span>${esc(V.gparsed.rows.slice(0,3).map(r=>r[i]??'').join(', '))}</span></div>`+
@@ -1702,7 +1703,7 @@ function gNote(g){
   const rf=V.gref||{},rbusy=AIS.busy&&AIS.kind==='ref';
   out+=`<div class="gh">선행연구</div>`+(rbusy?`<div class="gpad" style="padding-top:10px"><div class="aist"><i class="spin"></i><span id="aimsg">${esc(AIS.msg)}</span></div><button class="btn ghost sm" data-a="aiStop" style="margin-top:10px">멈추기</button></div>`
     :(curProv()!=='claude')?(P=>`<div class="aibox" style="margin-top:12px"><div class="d" style="margin-top:0">${P.name}로 문헌 정보를 채워요.</div><ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy" data-k="ref">지시문 복사</button></li><li>${P.name}를 열어 논문이나 자료 파일을 첨부하고, 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li><li>${P.name}의 답을 아래 칸에 붙여넣어요.</li></ol><textarea class="aiprompt" data-d="refans" style="background:#fff;min-height:96px" placeholder="${P.name}의 답 붙여넣기" aria-label="${P.name}의 답">${esc(V.refans||'')}</textarea><button class="btn orange sm" data-a="refPaste" style="margin-top:10px">답으로 채우기</button></div>`)(AI_PROV[curProv()])
-    :`<div class="grow" style="padding-top:10px"><button class="btn ghost sm" data-a="aiPick" data-k="ref">${I.doc}논문·자료 파일에서 채우기</button></div><div class="gnote">PPT나 PDF(앞 3쪽), 사진을 올리면 Claude가 읽고 제목·출처·요약을 채워요. 올린 쪽은 Claude로 전송돼요. 다른 AI를 쓰려면 "자료 넣기"에서 AI를 바꾸세요.</div>`)+
+    :`<div class="grow" style="padding-top:10px"><button class="btn ghost sm" data-a="aiPick" data-k="ref">${I.doc}논문·자료 파일에서 채우기</button></div><div class="gnote">PPT나 PDF(앞 3쪽), 사진을 올리면 ${AIN}가 읽고 제목·출처·요약을 채워요. 올린 쪽은 ${AIN}로 전송돼요. 다른 AI를 쓰려면 "자료 넣기"에서 AI를 바꾸세요.</div>`)+
     `<div class="gpad">`+gField('제목',`<input id="gr-title" value="${esc(rf.title||'')}" placeholder="논문·교재·자료 제목">`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"')+
     `<div class="g2">`+gField('출처',`<input id="gr-source" value="${esc(rf.source||'')}" placeholder="저자, 학술지, 연도">`)+gField('링크 또는 DOI',`<input id="gr-link" value="${esc(rf.link||'')}" placeholder="https://… 또는 10.…">`)+`</div>`+
     gField('내용 요약',`<textarea class="txt" id="gr-note" style="min-height:${rf.note?140:72}px" placeholder="이 문헌에서 참고할 내용">${esc(rf.note||'')}</textarea>`).replace('class="gf"','class="gf" style="padding-left:0;padding-right:0"');
@@ -2087,13 +2088,26 @@ async function makePDF(btn){
    ============================================================ */
 const AIS={busy:false,msg:'',ctl:null,kind:''};
 let aiFn; // undefined = 아직 확인 안 함, null = 이 화면에서는 쓸 수 없음
-async function aiGet(){if(aiFn===undefined){try{aiFn=(window.claude&&window.claude.use?await window.claude.use('sample'):null)||null}catch(_){aiFn=null}}return aiFn}
+async function aiGet(){if(aiFn===undefined){try{aiFn=(window.claude&&window.claude.use?await window.claude.use('sample'):null)||null}catch(_){aiFn=null}if(!aiFn)aiFn=GEMINI_AI}return aiFn}
+// 독립 웹사이트: 쓸모업 Supabase의 ai-json 함수가 Gemini를 불러 JSON으로 답을 받아 옴 (API 키는 서버에만 있음)
+const blobB64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(b)});
+const GEMINI_AI={
+  limits:async()=>({images:{maxCount:6}}),
+  async json(prompt,opt={}){
+    const tok=S.me&&S.me.token;if(!tok)throw {code:'session_expired'};
+    const images=[];for(const b of (opt.images||[]).slice(0,6)){if(b instanceof Blob)images.push({mime:b.type||'image/jpeg',data:await blobB64(b)})}
+    let r;try{r=await fetch(SYNC.url.replace('/rest/v1/rpc/','/functions/v1/ai-json'),{method:'POST',signal:opt.signal,headers:{apikey:SYNC.key,'Content-Type':'application/json'},body:JSON.stringify({token:tok,prompt,images})})}
+    catch(e){if(e&&e.name==='AbortError')throw {code:'cancelled'};throw {code:'net'}}
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d||d.result===undefined)throw {code:d&&d.code||'gemini'};
+    return d.result}
+};
 const AI_ERR={not_granted:'Claude 사용을 허용하지 않아서 읽지 않았어요',rate_limited:'요청이 많아요 · 잠시 뒤에 다시 해 보세요',queue_overflow:'요청이 많아요 · 잠시 뒤에 다시 해 보세요',
   image_rejected:'이 그림은 보낼 수 없어요 · 다른 파일로 해 보세요',prompt_too_large:'자료가 너무 길어요 · 읽을 쪽을 줄여 보세요',invalid_json:'답을 표로 바꾸지 못했어요 · 다시 해 보세요',
-  refused:'Claude가 이 자료는 읽지 않았어요',cancelled:'읽기를 멈췄어요',session_expired:'Claude 로그인이 끝났어요 · 새로고침한 뒤 다시',
+  refused:AIN+'가 이 자료는 읽지 않았어요',cancelled:'읽기를 멈췄어요',session_expired:AIN==='Claude'?'Claude 로그인이 끝났어요 · 새로고침한 뒤 다시':'로그인이 끝났어요 · 로그아웃 후 다시 로그인해 주세요',
   images_unavailable:'이 화면에서는 그림을 보낼 수 없어요',not_declared:'이 화면에서는 파일 읽기를 쓸 수 없어요',sampling_disabled:'이 화면에서는 파일 읽기를 쓸 수 없어요',
   capability_disabled:'이 화면에서는 파일 읽기를 쓸 수 없어요',capability_removed:'이 화면에서는 파일 읽기를 쓸 수 없어요',
-  none:'여기서는 파일 읽기를 쓸 수 없어요 · Claude에서 연 화면에서만 돼요',nofile:'읽을 수 있는 내용이 없어요 · 다른 파일로 해 보세요',pdflib:'PDF를 여는 도구를 불러오지 못했어요 · 새로고침한 뒤 다시'};
+  none:'여기서는 파일 읽기를 쓸 수 없어요 · Claude에서 연 화면에서만 돼요',nofile:'읽을 수 있는 내용이 없어요 · 다른 파일로 해 보세요',pdflib:'PDF를 여는 도구를 불러오지 못했어요 · 새로고침한 뒤 다시',net:'서버에 연결하지 못했어요 · 인터넷을 확인하세요',gemini:'Gemini가 답하지 못했어요 · 잠시 뒤 다시 해 보세요',nokey:'서버에 Gemini 키가 아직 없어요'};
 function loadScript(src){return new Promise((res,rej)=>{const t=document.createElement('script');t.src=src;t.onload=res;t.onerror=()=>rej({code:'pdflib'});document.head.appendChild(t)})}
 async function pdfLib(){ // PDF를 여는 도구는 필요할 때만 불러옴
   if(!window.pdfjsLib){const base='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';await loadScript(base+'pdf.min.js');await loadScript(base+'pdf.worker.min.js')} // 작업자 스크립트도 같은 창에 올려 둠
@@ -2190,7 +2204,7 @@ const aiClean=v=>String(v??'').replace(/[\t\n\r]+/g,' ').trim();
 function aiFillTable(d,parts){ // 읽은 표를 "표 붙여넣기" 칸과 "열 역할 지정"에 채움
   const cols=Array.isArray(d&&d.columns)?d.columns.filter(c=>c&&aiClean(c.name)):[],rows=Array.isArray(d&&d.rows)?d.rows.filter(Array.isArray):[];
   V.gopen=V.gopen||{};V.gopen.in=true;V.gauto=false;
-  if(!cols.length||!rows.length){V.gai=null;V.gparsed=null;V.gmsg='표로 옮길 숫자를 찾지 못했어요.'+(d&&aiClean(d.notes)?' Claude의 메모: '+aiClean(d.notes):'')+' 읽을 쪽을 바꿔서 다시 해 보세요.';return}
+  if(!cols.length||!rows.length){V.gai=null;V.gparsed=null;V.gmsg='표로 옮길 숫자를 찾지 못했어요.'+(d&&aiClean(d.notes)?' '+AIN+'의 메모: '+aiClean(d.notes):'')+' 읽을 쪽을 바꿔서 다시 해 보세요.';return}
   const head=cols.map(c=>aiClean(c.name)+(aiClean(c.unit)?` (${aiClean(c.unit)})`:''));
   V.gpaste=[head.join('\t')].concat(rows.map(r=>cols.map((_,i)=>aiClean(r[i])).join('\t'))).join('\n');
   V.gparsed=parseTable(V.gpaste);
@@ -2219,10 +2233,10 @@ async function aiRun(files,kind){
     const maxN=canImg?Math.max(1,Math.min(lim.images.maxCount||4,kind==='ref'?3:8)):0;
     const parts=await fileParts(files,kind==='ref'?[1,2,3]:parsePages(V.gpages),maxN,say);
     if(!parts.images.length&&!parts.text)throw {code:canImg?'nofile':'images_unavailable'};
-    say(`Claude가 ${parts.images.length?parts.images.length+'쪽의 그림과 ':''}글자를 읽는 중 · 보통 10초에서 1분쯤 걸려요`);
+    say(`${AIN}가 ${parts.images.length?parts.images.length+'쪽의 그림과 ':''}글자를 읽는 중 · 보통 10초에서 1분쯤 걸려요`);
     const opt={signal:AIS.ctl.signal};if(parts.images.length)opt.images=parts.images;
     const d=await ai.json(kind==='ref'?aiRefPrompt(e,parts.text):aiTablePrompt(e,parts.text),opt);
-    if(exp()===e){if(kind==='ref')aiFillRef(d);else{aiFillTable(d,parts);if(V.gparsed)toast(`Claude가 <b>${V.gai.n}줄</b>을 읽었어요 · 확인하고 가져오세요`)}}
+    if(exp()===e){if(kind==='ref')aiFillRef(d);else{aiFillTable(d,parts);if(V.gparsed)toast(`${AIN}가 <b>${V.gai.n}줄</b>을 읽었어요 · 확인하고 가져오세요`)}}
   }catch(err){const c=err&&err.code;if(!c)console.error(err);toast(AI_ERR[c]||'읽는 중에 문제가 생겼어요 · 다시 해 보세요')}
   AIS.busy=false;AIS.ctl=null;render();
 }
@@ -2240,7 +2254,7 @@ const aiCopyPrompt=e=>`첨부한 실험 자료(PPT·PDF·사진)에서 「${e.no
 const AI_PROV={claude:{name:'Claude'},chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/'},gemini:{name:'Gemini',url:'https://gemini.google.com/app'}};
 // Claude 화면 밖(독립 웹사이트)에서는 Claude 직접 읽기를 쓸 수 없으므로 목록에서 뺌
 const IN_CLAUDE=!!(window.claude&&window.claude.use);
-if(!IN_CLAUDE)delete AI_PROV.claude;
+if(!IN_CLAUDE){const r={...AI_PROV};Object.keys(AI_PROV).forEach(k=>delete AI_PROV[k]);AI_PROV.claude={name:'Gemini 자동'};AI_PROV.chatgpt=r.chatgpt;AI_PROV.gemini={name:'Gemini 앱',url:r.gemini.url}} // 웹사이트에서는 첫 칸이 '쓸모업 서버 → Gemini' 자동 읽기
 function curProv(){return AI_PROV[S.aiProv]?S.aiProv:Object.keys(AI_PROV)[0]}
 const aiRefCopyPrompt=e=>`첨부한 문헌(논문·교재·수업 자료)에서 참고 문헌 목록에 적을 정보를 뽑아 줘. 자료에 없는 것은 비워 두고, 추측하지 마.
 
@@ -2363,7 +2377,7 @@ async function aiSteps(files){
     let parts=await fileParts(files,[],0,say); // 먼저 글자만 뽑음 (빠르고 가벼움)
     if((parts.text.length<800||files.some(isImg))&&maxN)parts=await fileParts(files,[...Array(maxN)].map((_,k)=>k+1),maxN,say); // 글자가 거의 없으면(스캔본·사진) 앞쪽을 그림으로 보냄
     if(!parts.text&&!parts.images.length)throw {code:'nofile'};
-    say('Claude가 실험 과정을 찾아 단계로 나누는 중 · 보통 10초에서 1분쯤 걸려요');
+    say(AIN+'가 실험 과정을 찾아 단계로 나누는 중 · 보통 10초에서 1분쯤 걸려요');
     const opt={signal:AIS.ctl.signal};if(parts.images.length)opt.images=parts.images;
     const d=await ai.json(aiStepsPrompt(parts.text),opt);
     if(V.name==='add'){ok=stepsToDraft(d,V.file);if(!ok)toast('실험 과정을 찾지 못했어요 · 다른 자료로 해 보세요'+(d&&aiClean(d.notes)?' ('+esc(aiClean(d.notes))+')':''))}
@@ -2376,7 +2390,7 @@ function aiBox(){
   let o=`<div class="aibox"><div class="t">파일에서 표 읽기</div><div class="d">실험 PPT나 PDF, 폰으로 찍은 사진에서 AI가 숫자를 찾아 표로 옮겨요. 평소에 쓰는 AI를 고르세요.</div>`+
     `<div class="aiprov" role="group" aria-label="사용할 AI">${Object.keys(AI_PROV).map(k=>`<button class="${k===pv?'on':''}" data-a="aiProv" data-k="${k}" aria-pressed="${k===pv}">${AI_PROV[k].name}</button>`).join('')}</div>`;
   if(pv==='claude')o+=busy?`<div class="aist"><i class="spin"></i><span id="aimsg">${esc(AIS.msg)}</span></div><button class="btn ghost sm" data-a="aiStop" style="margin-top:12px">멈추기</button>`
-    :`<div class="d" style="margin-top:0">파일을 올리면 이 화면에서 바로 읽어요. 올린 쪽은 Claude로 전송되고, 내 Claude 사용량을 써요.</div><div class="gf" style="padding:0 0 12px"><label class="label">읽을 쪽 · PPT와 PDF만 (비우면 뒤쪽부터)</label><input data-gi="pages" value="${esc(V.gpages||'')}" placeholder="예: 13-15"></div><button class="btn orange" data-a="aiPick" data-k="table">${I.doc}PPT · PDF · 사진 올리기</button>`;
+    :`<div class="d" style="margin-top:0">파일을 올리면 이 화면에서 바로 읽어요. ${AIN==='Claude'?'올린 쪽은 Claude로 전송되고, 내 Claude 사용량을 써요.':'올린 쪽은 쓸모업 서버를 거쳐 Gemini로 전송돼요.'}</div><div class="gf" style="padding:0 0 12px"><label class="label">읽을 쪽 · PPT와 PDF만 (비우면 뒤쪽부터)</label><input data-gi="pages" value="${esc(V.gpages||'')}" placeholder="예: 13-15"></div><button class="btn orange" data-a="aiPick" data-k="table">${I.doc}PPT · PDF · 사진 올리기</button>`;
   else o+=`<div class="d" style="margin-top:0">이 화면에서 ${P.name}를 직접 부를 수는 없어요. 대신 아래 순서로 하면 ${P.name}가 읽은 표를 그대로 가져올 수 있어요.</div>`+
     `<ol class="aisteps"><li>지시문을 복사해요.<br><button class="btn black sm" data-a="aiCopy">지시문 복사</button></li>`+
     `<li>${P.name}를 열어 실험 PPT나 PDF, 사진을 첨부하고, 복사한 지시문을 붙여넣어 보내요.<br><a class="btn ghost sm" href="${P.url}" target="_blank" rel="noopener noreferrer">${P.name} 열기</a></li>`+
