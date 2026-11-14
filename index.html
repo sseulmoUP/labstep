@@ -69,6 +69,13 @@ input,textarea{font:inherit;color:inherit}
 .gbtn{background:#fff}
 .gdot{width:20px;height:20px;border-radius:50%;border:1px solid var(--edge);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
 .note{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
+.authbox{margin-bottom:14px}
+.authtabs{display:flex;gap:6px;margin-bottom:4px}
+.authtabs button{flex:1;height:40px;border:1px solid var(--edge);border-radius:var(--r-sm);background:#fff;font:inherit;font-size:15px;color:var(--muted)}
+.authtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+.authbox .gf{padding:12px 0 0}
+.autherr{min-height:20px;margin-top:10px;font-size:14px;color:var(--danger)}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2DB36A;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 3px rgba(45,179,106,.18)}
 
 /* lists */
 .sect-h{display:flex;align-items:baseline;justify-content:space-between;padding:20px 18px 8px}
@@ -740,29 +747,35 @@ const initial=n=>{n=String(n||'').trim();return esc(/[가-힣]/.test(n)?n.replac
 /* ---------- render ---------- */
 const $=s=>document.querySelector(s);
 function render(){
-  const f={login,teams,team:teamV,members,add,exp:expV,step:stepV,edit:editV}[V.name];
+  const f={login,signup:login,teams,team:teamV,members,add,exp:expV,step:stepV,edit:editV}[V.name];
   $('#phone').innerHTML=f();
   if(V.focusNew){const el=document.querySelector('.ph.new input');if(el){el.scrollIntoView({block:'center'});setTimeout(()=>el.focus(),250)}V.focusNew=false}
 }
 
 function login(){
-  const m=S.me||{},known=m.src==='claude'&&m.name;
+  const su=V.name==='signup';
   return `<div class="login">
    <div class="logo"><div class="logo-mark">${I.flask}</div><b>LabStep</b><span class="tag g">가칭</span></div>
    <div class="hero">
      <h2>단계를 누르고,<br>찍으면 정리 <em>끝!</em></h2>
      <p>실험 사진이 촬영하는 순간 해당 단계에 붙어요. 갤러리에서 다시 고를 필요가 없어요.</p>
    </div>
-   ${known?`<div class="invite"><div class="label">Claude 계정</div><b>${esc(m.name)}</b> 님 이름으로 기록해요</div>`
-     :`<div class="gf" style="padding:0 0 12px"><label class="label" for="myname">내 이름 · 사진과 메모에 남아요</label><input id="myname" value="${esc(m.name||'')}" placeholder="예: 홍길동" autocomplete="name" enterkeyhint="go"></div>`}
-   ${PENDING?`<div class="invite" style="margin-bottom:12px"><div class="label">팀 초대</div>초대받은 팀이 있어요. 이름을 넣고 시작하면 바로 그 팀에 들어가요.</div>`:''}
-   <button class="btn black" data-a="login">${PENDING?'시작하고 팀에 참여하기':'시작하기'}</button>
-   <div class="note">${known?'이름은 Claude 계정에서 가져왔어요.':IN_CLAUDE?'Claude에 로그인한 상태로 열면 이름이 자동으로 들어가요.':''} 기록은 이 기기에 저장돼요.</div>
+   <div class="authbox">
+    <div class="authtabs"><button class="${su?'':'on'}" data-a="toLogin">로그인</button><button class="${su?'on':''}" data-a="toSignup">회원가입</button></div>
+    <div class="gf"><label class="label" for="lid">아이디</label><input id="lid" placeholder="${su?'영문 소문자·숫자 3~20자':'예: lab01'}" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+    <div class="gf"><label class="label" for="lpw">비밀번호</label><input id="lpw" type="password" placeholder="${su?'4자 이상':''}" autocomplete="${su?'new-password':'current-password'}" enterkeyhint="${su?'next':'go'}"></div>
+    ${su?`<div class="gf"><label class="label" for="lpw2">비밀번호 확인</label><input id="lpw2" type="password" autocomplete="new-password"></div>
+    <div class="gf"><label class="label" for="lname">이름 · 사진과 메모에 남아요</label><input id="lname" placeholder="예: 홍길동" autocomplete="name" enterkeyhint="go"></div>`:''}
+    <div class="autherr" id="autherr"></div>
+   </div>
+   ${PENDING?`<div class="invite" style="margin:12px 0"><div class="label">팀 초대</div>초대받은 팀이 있어요. ${su?'가입하면':'로그인하면'} 바로 그 팀에 들어가요.</div>`:''}
+   <button class="btn black" data-a="${su?'signup':'login'}" id="authbtn">${su?'가입하고 시작하기':'로그인'}</button>
+   <div class="note">${su?'이미 계정이 있으면 위의 "로그인"을 누르세요.':'처음이면 위의 "회원가입"을 누르세요.'}</div>
   </div>`;
 }
 
 function teams(){
-  return `<div class="top"><div class="logo" style="padding-left:10px;flex:1"><div class="logo-mark" style="width:28px;height:28px">${I.flask}</div><b style="font-size:17px">LabStep</b></div><button class="mini" data-a="logout">나가기</button></div>
+  return `<div class="top"><div class="logo" style="padding-left:10px;flex:1"><div class="logo-mark" style="width:28px;height:28px">${I.flask}</div><b style="font-size:17px">LabStep</b></div><button class="mini" data-a="logout">로그아웃</button></div>
   <div class="content">
    <div class="pad" style="padding-bottom:0"><div style="font-size:15px"><b>${esc(ME)}</b> 님</div><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">${SYNC.on?'팀원에게 코드를 받았으면 아래에 넣어 참여하세요. 새 팀은 맨 아래 "팀 만들기"로 만들어요.':'팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.'}</div></div>
    ${SYNC.on?`<div class="aibox"><div class="t">팀 코드로 참여하기</div><div class="d">팀원에게 받은 12자리 코드를 넣으면, 그 팀의 실험과 사진이 이 기기에 나타나요.</div>
@@ -783,7 +796,7 @@ function teamV(){
   const t=team();
   return `${topbar(esc(t.name),`<button class="iconbtn" data-a="members" aria-label="팀원">${I.users}</button>`)}
   <div class="content">
-   <button class="members" data-a="members">${avRow(t)}<span class="txt">기록한 사람 ${people(t).length}명${t.sync&&t.sync.code?' · 실시간 공유 중':''}</span><span class="mono" style="font-size:12px">›</span></button>
+   <button class="members" data-a="members">${avRow(t)}<span class="txt">${onlineOf(t)?`<span class="live"></span>참여 중 ${onlineOf(t).length}명 · ${onlineOf(t).map(o=>esc(o.uname)).join(', ')}`:`기록한 사람 ${people(t).length}명${t.sync&&t.sync.code?' · 실시간 공유 중':''}`}</span><span class="mono" style="font-size:12px">›</span></button>
    <div class="sect-h"><span class="label">실험</span><span class="label">${t.experiments.length}</span></div>
    ${t.experiments.length?t.experiments.map(e=>{const [d,n]=progress(e);const ph=e.steps.reduce((a,s)=>a+s.photos.length,0);return `<button class="card" data-a="openExp" data-id="${e.id}">
       <div class="label">${esc(e.no)} · ${fmtDate(e.created)}</div>
@@ -798,12 +811,15 @@ function teamV(){
 
 function members(){
   const t=team(),ps=people(t),fromClaude=!!(S.me&&S.me.src==='claude');
+  const on=onlineOf(t);
   return `${topbar('팀원')}
   <div class="content">
+   ${on?`<div class="sect-h"><span class="label">지금 참여 중</span><span class="label">${on.length}명</span></div>
+   ${on.map(o=>`<div class="mem"><span class="av ${o.uid===(S.me&&S.me.id)?'me':''}">${initial(o.uname)}</span><div class="n"><b>${esc(o.uname)}</b> ${o.uid===(S.me&&S.me.id)?'<span class="tag o">나</span>':''}<div><span class="live"></span>접속 중</div></div></div>`).join('')}`:''}
    <div class="sect-h"><span class="label">기록한 사람</span><span class="label">${ps.length}명</span></div>
    ${ps.map(m=>`<div class="mem"><span class="av ${m.me?'me':''}">${initial(m.name)}</span>
-     <div class="n"><b>${esc(m.name)}</b> ${m.me?'<span class="tag o">나</span>':''}<div>${m.me?(fromClaude?'Claude 계정의 이름':'직접 적은 이름'):'사진·메모에 남은 이름'}</div></div>
-     ${m.me&&!fromClaude?`<button class="mini" data-a="rename">이름 바꾸기</button>`:''}</div>`).join('')}
+     <div class="n"><b>${esc(m.name)}</b> ${m.me?'<span class="tag o">나</span>':''}<div>${m.me?(fromClaude?'Claude 계정의 이름':S.me&&S.me.src==='account'?`계정 ${esc(S.me.id)}`:'직접 적은 이름'):'사진·메모에 남은 이름'}</div></div>
+     ${m.me&&!fromClaude&&!(S.me&&S.me.src==='account')?`<button class="mini" data-a="rename">이름 바꾸기</button>`:''}</div>`).join('')}
    ${syncBox(t)}
   </div>`;
 }
@@ -986,18 +1002,45 @@ async function addPhotos(files,sid){
   toast(`<b>${esc(s.title)}</b>에 사진이 붙었어요`);
 }
 
+// 계정 로그인·회원가입 (서버의 ls_login / ls_signup)
+let AUTH_BUSY=false;
+document.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.isComposing)return;const id=e.target&&e.target.id;if(!['lid','lpw','lpw2','lname'].includes(id))return;e.preventDefault();const su=V.name==='signup',last=su?'lname':'lpw';if(id===last)authGo(su);else{const nx={lid:'lpw',lpw:'lpw2',lpw2:'lname'}[id];const el=nx&&$('#'+nx);if(el)el.focus()}});
+async function authGo(su){
+  if(AUTH_BUSY)return;
+  const v=id=>{const el=$('#'+id);return el?el.value:''},err=m=>{const e=$('#autherr');if(e)e.textContent=m};
+  const id=v('lid').trim().toLowerCase(),pw=v('lpw');
+  if(!id){$('#lid').focus();return err('아이디를 입력하세요')}
+  if(!pw){$('#lpw').focus();return err('비밀번호를 입력하세요')}
+  let name='';
+  if(su){
+    if(!/^[a-z0-9_]{3,20}$/.test(id)){$('#lid').focus();return err('아이디는 영문 소문자·숫자 3~20자로 적어 주세요')}
+    if(pw.length<4){$('#lpw').focus();return err('비밀번호는 4자 이상이에요')}
+    if(pw!==v('lpw2')){$('#lpw2').focus();return err('비밀번호 확인이 달라요')}
+    name=v('lname').trim();if(!name){$('#lname').focus();return err('이름을 입력하세요')}
+  }
+  AUTH_BUSY=true;const b=$('#authbtn');if(b){b.disabled=true;b.textContent=su?'가입하는 중…':'확인하는 중…'}
+  let u=null;
+  try{u=su?await rpc('ls_signup',{p_id:id,p_pw:pw,p_name:name}):await rpc('ls_login',{p_id:id,p_pw:pw})}
+  catch(e){AUTH_BUSY=false;if(b){b.disabled=false;b.textContent=su?'가입하고 시작하기':'로그인'}
+    return err(su?'가입하지 못했어요 · 이미 있는 아이디일 수 있어요':'서버에 연결하지 못했어요 · 잠시 뒤 다시 시도하세요')}
+  AUTH_BUSY=false;
+  if(!u||!u.name){if(b){b.disabled=false;b.textContent='로그인'}return err('아이디 또는 비밀번호가 맞지 않아요')}
+  S.me={name:u.name,id:u.id,src:'account'};ME=u.name;S.loggedIn=true;save();hist.length=0;
+  if(PENDING&&SYNC.on){const c=PENDING;PENDING='';return joinByCode(c)}
+  go({name:'teams'},false);toast(`<b>${esc(u.name)}</b> 님, ${su?'가입을 환영해요':'반가워요'}`);
+}
+
 const A={
   back,
-  login(){const el=$('#myname'),n=el?el.value.trim():((S.me&&S.me.name)||'');
-    if(!n){if(el)el.focus();return toast('이름을 입력하세요')}
-    S.me=Object.assign({},S.me,{name:n});ME=n;S.loggedIn=true;save();hist.length=0;
-    if(PENDING&&SYNC.on){const c=PENDING;PENDING='';return joinByCode(c)}
-    go({name:'teams'},false);toast(`<b>${esc(n)}</b> 님, 시작할게요`)},
+  login(){authGo(false)},
+  signup(){authGo(true)},
+  toLogin(){if(V.name!=='login'){V={name:'login'};render()}},
+  toSignup(){if(V.name!=='signup'){V={name:'signup'};render()}},
   joinTeam(){const inp=$('#join-code');if(!joinByCode(inp?inp.value:'')&&inp)inp.focus()},
   // 처음 화면(팀 목록)으로 한 번에 돌아가기
   home(){hist.length=0;go({name:'teams'},false)},
   // 첫 화면(이름 적는 화면)으로 나가기. 기록은 그대로 남음
-  logout(){S.loggedIn=false;save();hist.length=0;go({name:'login'},false)},
+  logout(){S.loggedIn=false;S.me={name:''};ME='나';save();hist.length=0;go({name:'login'},false)},
   rename(){const d=sheet(`<h3>이름 바꾸기</h3><p>지금까지 내가 남긴 사진·메모의 이름도 함께 바뀌어요.</p><input id="rn" value="${esc(ME)}" autocomplete="name"><button class="btn black" data-x="ok">바꾸기</button>`);
     const inp=d.querySelector('#rn');setTimeout(()=>inp.focus(),100);
     d.querySelector('[data-x=ok]').onclick=()=>{const n=inp.value.trim(),old=ME;if(!n){inp.focus();return}
@@ -2299,7 +2342,7 @@ function syncBox(t){
    <div class="linkbox"><div class="u" id="synccode">${esc(sy.code)}</div><div class="r"><button class="o" data-a="syncCopy">코드 복사</button><button data-a="syncOff">공유 끄기</button></div></div>
    <div class="gnote" id="syncst">${syncStatus()}</div>
    <div class="grow"><button class="btn orange sm" data-a="syncLink">초대 링크 복사</button></div>
-   <div class="hint">팀원에게 초대 링크를 보내면, 이름만 넣고 바로 이 팀에 들어와요. 코드를 직접 알려 줄 때는 팀원이 이 사이트를 열고 첫 화면 다음에 나오는 "팀 코드로 참여하기"에 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
+   <div class="hint">팀원에게 초대 링크를 보내면, 로그인하면 바로 이 팀에 들어와요. 코드를 직접 알려 줄 때는 팀원이 이 사이트를 열고 첫 화면 다음에 나오는 "팀 코드로 참여하기"에 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
   return `<div class="secname">실시간 공유</div>
    <div class="gnote" style="padding-top:4px">같은 팀 코드를 쓰는 기기끼리 사진·메모·측정값을 자동으로 주고받아요. 휴대폰으로 찍은 사진이 컴퓨터 화면에 바로 나타나요.</div>
    <div class="grow"><button class="btn black" data-a="syncNew">이 팀의 공유 시작하기</button></div>
@@ -2346,11 +2389,26 @@ async function syncTeam(t){
   }
   return {changed,got};
 }
+// 지금 참여 중인 사람: 몇 초마다 "나 여기 있어" 신호를 보내고, 최근 20초 안에 신호를 보낸 사람 목록을 받음
+SYNC.online={};
+const onlineOf=t=>t&&t.sync&&t.sync.code&&SYNC.online[t.sync.code]?SYNC.online[t.sync.code]:null;
+async function pingTeam(t){
+  const code=t.sync.code,me=S.me&&S.me.id?S.me.id:'guest-'+ME;
+  const list=await rpc('ls_ping',{p_code:code,p_id:me,p_name:ME})||[];
+  const prev=SYNC.online[code]||[],key=l=>l.map(x=>x.uid).sort().join('|');
+  SYNC.online[code]=list;
+  if(key(prev)!==key(list)){
+    const pid=new Set(prev.map(x=>x.uid)),neu=prev.length?list.filter(x=>!pid.has(x.uid)&&x.uid!==me):[];
+    if(neu.length)toast(`<b>${neu.map(x=>esc(x.uname)).join(', ')}</b> 님이 들어왔어요`);
+    if(['team','members'].includes(V.name))softRender();
+  }
+}
 async function syncTick(){
   if(!SYNC.on||SYNC.busy||document.hidden)return;
   const ts=S.teams.filter(t=>t.sync&&t.sync.code);if(!ts.length)return;
   SYNC.busy=true;
   for(const t of ts){
+    try{await pingTeam(t)}catch(_){}
     try{const r=await syncTeam(t);SYNC.err='';SYNC.last=Date.now();
       if(r.changed){save();if(r.got.nm&&!(r.got.ex||r.got.ph||r.got.ms))softRender();if(r.got.ex||r.got.ph||r.got.ms){softRender();toast(`팀원의 기록이 들어왔어요${r.got.ex?` · 새 실험 ${r.got.ex}개`:''}${r.got.ph?` · 사진 ${r.got.ph}장`:''}${r.got.ms?` · 측정값 ${r.got.ms}개`:''}`)}}
     }catch(err){SYNC.err=String(err&&err.message||err)}
@@ -2390,7 +2448,7 @@ Object.assign(A,{
 /* ---------- boot ---------- */
 (async()=>{
   render();
-  if(await DB.open()){const st=await DB.get();if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
+  if(await DB.open()){const st=await DB.get();if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.src==='account'&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
     if(S.loggedIn){V={name:'teams'}}render()}}
   if(S.loggedIn&&PENDING&&SYNC.on){const c=PENDING;PENDING='';joinByCode(c)} // 이미 쓰던 사람이 초대 링크를 연 경우
   // Claude에 로그인한 사람이면 그 이름을 씀 (못 가져오면 첫 화면에서 직접 적음)
