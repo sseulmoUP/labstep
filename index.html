@@ -707,6 +707,13 @@ function defaultState(){
   return {loggedIn:false,me:{name:''},teams:[{id:'t1',name:'무기화학실험 2조',course:'무기화학실험',experiments:[]}]};
 }
 
+// 초대 링크는 주소 끝에 #팀코드가 붙어 있음. 읽어 두고 주소에서는 지움
+let PENDING='';
+function readInvite(){try{const h=(location.hash||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();if(h.length!==12)return '';history.replaceState(null,'',location.pathname+location.search);return h}catch(_){return ''}}
+PENDING=readInvite();
+// 앱이 열려 있는 탭에서 초대 링크를 눌렀을 때 (주소 끝만 바뀌고 새로 열리지 않는 경우)
+window.addEventListener('hashchange',()=>{const c=readInvite();if(!c||!SYNC.on)return;if(S.loggedIn)joinByCode(c);else{PENDING=c;render()}});
+
 /* ---------- storage (이 폰 안에만 저장) ---------- */
 let S=defaultState();
 const DB={db:null,
@@ -748,7 +755,8 @@ function login(){
    </div>
    ${known?`<div class="invite"><div class="label">Claude 계정</div><b>${esc(m.name)}</b> 님 이름으로 기록해요</div>`
      :`<div class="gf" style="padding:0 0 12px"><label class="label" for="myname">내 이름 · 사진과 메모에 남아요</label><input id="myname" value="${esc(m.name||'')}" placeholder="예: 홍길동" autocomplete="name" enterkeyhint="go"></div>`}
-   <button class="btn black" data-a="login">시작하기</button>
+   ${PENDING?`<div class="invite" style="margin-bottom:12px"><div class="label">팀 초대</div>초대받은 팀이 있어요. 이름을 넣고 시작하면 바로 그 팀에 들어가요.</div>`:''}
+   <button class="btn black" data-a="login">${PENDING?'시작하고 팀에 참여하기':'시작하기'}</button>
    <div class="note">${known?'이름은 Claude 계정에서 가져왔어요.':IN_CLAUDE?'Claude에 로그인한 상태로 열면 이름이 자동으로 들어가요.':''} 기록은 이 기기에 저장돼요.</div>
   </div>`;
 }
@@ -756,10 +764,13 @@ function login(){
 function teams(){
   return `<div class="top"><div class="logo" style="padding-left:10px;flex:1"><div class="logo-mark" style="width:28px;height:28px">${I.flask}</div><b style="font-size:17px">LabStep</b></div><button class="mini" data-a="logout">나가기</button></div>
   <div class="content">
-   <div class="pad" style="padding-bottom:0"><div style="font-size:15px"><b>${esc(ME)}</b> 님</div><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.</div></div>
+   <div class="pad" style="padding-bottom:0"><div style="font-size:15px"><b>${esc(ME)}</b> 님</div><div style="font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5">${SYNC.on?'팀원에게 코드를 받았으면 아래에 넣어 참여하세요. 새 팀은 맨 아래 "팀 만들기"로 만들어요.':'팀을 누르면 실험 목록이 나와요. 새 팀은 아래 "팀 만들기"로 만들어요.'}</div></div>
+   ${SYNC.on?`<div class="aibox"><div class="t">팀 코드로 참여하기</div><div class="d">팀원에게 받은 12자리 코드를 넣으면, 그 팀의 실험과 사진이 이 기기에 나타나요.</div>
+     <div class="gf" style="padding:12px 0 0"><input id="join-code" placeholder="예: K7M2-Q9XF-3HTA" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" aria-label="팀 코드"></div>
+     <button class="btn orange" data-a="joinTeam" style="margin-top:10px">참여하기</button></div>`:''}
    <div class="sect-h"><span class="label">내 팀</span><span class="label">${S.teams.length}</span></div>
    ${S.teams.map(t=>{const n=t.experiments.length;return `<button class="card" data-a="openTeam" data-id="${t.id}">
-     <div class="t">${esc(t.name)}</div><div class="s">기록한 사람 ${people(t).length}명 · 실험 ${n}개</div></button>`}).join('')}
+     <div class="t">${esc(t.name)}</div><div class="s">기록한 사람 ${people(t).length}명 · 실험 ${n}개${t.sync&&t.sync.code?' · 실시간 공유 중':''}</div></button>`}).join('')}
    <div class="pad" style="text-align:center"><button class="mini" data-a="allFile">전체 백업 파일 만들기</button> &nbsp;·&nbsp; <button class="mini" data-a="impPick">백업·실험 파일 가져오기</button><br><button class="mini" data-a="reset" style="margin-top:14px">기록 모두 지우기</button></div>
   </div>
   <div class="bottom"><button class="btn black" data-a="newTeam">${I.plus}팀 만들기</button></div>`;
@@ -979,7 +990,10 @@ const A={
   back,
   login(){const el=$('#myname'),n=el?el.value.trim():((S.me&&S.me.name)||'');
     if(!n){if(el)el.focus();return toast('이름을 입력하세요')}
-    S.me=Object.assign({},S.me,{name:n});ME=n;S.loggedIn=true;save();hist.length=0;go({name:'teams'},false);toast(`<b>${esc(n)}</b> 님, 시작할게요`)},
+    S.me=Object.assign({},S.me,{name:n});ME=n;S.loggedIn=true;save();hist.length=0;
+    if(PENDING&&SYNC.on){const c=PENDING;PENDING='';return joinByCode(c)}
+    go({name:'teams'},false);toast(`<b>${esc(n)}</b> 님, 시작할게요`)},
+  joinTeam(){const inp=$('#join-code');if(!joinByCode(inp?inp.value:'')&&inp)inp.focus()},
   // 처음 화면(팀 목록)으로 한 번에 돌아가기
   home(){hist.length=0;go({name:'teams'},false)},
   // 첫 화면(이름 적는 화면)으로 나가기. 기록은 그대로 남음
@@ -2284,7 +2298,8 @@ function syncBox(t){
   if(sy&&sy.code)return `<div class="secname">실시간 공유 · 켜져 있어요</div>
    <div class="linkbox"><div class="u" id="synccode">${esc(sy.code)}</div><div class="r"><button class="o" data-a="syncCopy">코드 복사</button><button data-a="syncOff">공유 끄기</button></div></div>
    <div class="gnote" id="syncst">${syncStatus()}</div>
-   <div class="hint">팀원이 자기 휴대폰이나 컴퓨터에서 이 사이트를 열고, 팀원 화면의 "코드로 참여하기"에 위 코드를 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
+   <div class="grow"><button class="btn orange sm" data-a="syncLink">초대 링크 복사</button></div>
+   <div class="hint">팀원에게 초대 링크를 보내면, 이름만 넣고 바로 이 팀에 들어와요. 코드를 직접 알려 줄 때는 팀원이 이 사이트를 열고 첫 화면 다음에 나오는 "팀 코드로 참여하기"에 넣으면 돼요. 사진·메모·측정값이 몇 초 안에 서로의 화면에 나타나요. 코드를 아는 사람은 누구나 이 팀의 기록을 보고 고칠 수 있으니 팀원에게만 알려 주세요.</div>`;
   return `<div class="secname">실시간 공유</div>
    <div class="gnote" style="padding-top:4px">같은 팀 코드를 쓰는 기기끼리 사진·메모·측정값을 자동으로 주고받아요. 휴대폰으로 찍은 사진이 컴퓨터 화면에 바로 나타나요.</div>
    <div class="grow"><button class="btn black" data-a="syncNew">이 팀의 공유 시작하기</button></div>
@@ -2306,6 +2321,9 @@ async function syncTeam(t){
   const rows=await rpc('ls_pull_exps',{p_code:code,p_since:SYNC.since[code]||null})||[];
   for(const row of rows){
     const k=code+'|'+row.exp_id,d=row.data;SYNC.seen[k]=row.updated_at;
+    if(d&&typeof d==='object'&&d.teamName!==undefined){ // 참여한 팀은 만든 사람이 지은 팀 이름을 받아 씀
+      if(t.joined&&!t.named&&String(d.teamName).trim()){t.name=String(d.teamName).trim().slice(0,60);t.course=String(d.teamCourse||'').slice(0,60);t.named=true;changed=true;got.nm=1}
+      delete d.teamName;delete d.teamCourse}
     if(validExp(d)&&!(sy.gone&&sy.gone[row.exp_id])){ // 이 기기에서 지운 실험은 다시 받지 않음
       const have=new Map();S.teams.forEach(tt=>tt.experiments.forEach(x=>{if(x.id===d.id)x.steps.forEach(q=>q.photos.forEach(p=>have.set(p.id,p.src)))}));
       const need=[];d.steps.forEach(q=>q.photos.forEach(p=>{if(p&&have.has(p.id))p.src=have.get(p.id);else if(p&&typeof p.id==='string')need.push(p.id)}));
@@ -2322,7 +2340,8 @@ async function syncTeam(t){
     const k=code+'|'+e.id;
     for(const q of e.steps)for(const p of q.photos)if(!sy.sent[p.id]){await rpc('ls_push_photo',{p_code:code,p_photo_id:p.id,p_src:p.src});sy.sent[p.id]=1;changed=true}
     const s=lightExp(e);if(SYNC.sig[k]===s)continue;
-    const at=await rpc('ls_push_exp',{p_code:code,p_exp_id:e.id,p_data:JSON.parse(s),p_base:SYNC.seen[k]||null});
+    const data=JSON.parse(s);if(!t.joined||t.named){data.teamName=t.name;data.teamCourse=t.course||''}
+    const at=await rpc('ls_push_exp',{p_code:code,p_exp_id:e.id,p_data:data,p_base:SYNC.seen[k]||null});
     if(at){SYNC.seen[k]=at;SYNC.sig[k]=s} // null이면 다른 기기가 먼저 바꾼 것 → 다음 번에 받아서 합친 뒤 다시 올림
   }
   return {changed,got};
@@ -2333,14 +2352,28 @@ async function syncTick(){
   SYNC.busy=true;
   for(const t of ts){
     try{const r=await syncTeam(t);SYNC.err='';SYNC.last=Date.now();
-      if(r.changed){save();if(r.got.ex||r.got.ph||r.got.ms){softRender();toast(`팀원의 기록이 들어왔어요${r.got.ex?` · 새 실험 ${r.got.ex}개`:''}${r.got.ph?` · 사진 ${r.got.ph}장`:''}${r.got.ms?` · 측정값 ${r.got.ms}개`:''}`)}}
+      if(r.changed){save();if(r.got.nm&&!(r.got.ex||r.got.ph||r.got.ms))softRender();if(r.got.ex||r.got.ph||r.got.ms){softRender();toast(`팀원의 기록이 들어왔어요${r.got.ex?` · 새 실험 ${r.got.ex}개`:''}${r.got.ph?` · 사진 ${r.got.ph}장`:''}${r.got.ms?` · 측정값 ${r.got.ms}개`:''}`)}}
     }catch(err){SYNC.err=String(err&&err.message||err)}
   }
   SYNC.busy=false;const el=$('#syncst');if(el)el.textContent=syncStatus();
 }
 setInterval(syncTick,4000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncTick()});
+// 코드로 팀에 참여: 그 코드의 팀이 이 기기에 없으면 새로 만들어 연결하고, 바로 그 팀 화면으로 감
+function joinByCode(input){
+  const raw=String(input||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(raw.length!==12){toast('코드 12자리를 입력하세요');return false}
+  const c=fmtCode(raw);let t=S.teams.find(x=>x.sync&&x.sync.code===c);
+  if(!t){t={id:uid(),name:'참여한 팀',course:'',experiments:[],sync:{code:c,sent:{}},joined:true};
+    S.teams=S.teams.filter(x=>!(x.id==='t1'&&!x.experiments.length&&!x.sync)); // 처음부터 있던 빈 팀은 치움
+    S.teams.unshift(t)}
+  save();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  hist.length=0;hist.push({name:'teams'});V={name:'team',tid:t.id};render();window.scrollTo(0,0);syncTick();
+  toast('팀에 참여했어요 · 곧 팀의 기록을 받아 와요');return true;
+}
 Object.assign(A,{
+  async syncLink(){const c=((team().sync||{}).code||'').replace(/[^A-Z0-9]/g,''),u=location.origin+location.pathname+'#'+c;
+    try{await navigator.clipboard.writeText(u);toast('초대 링크를 복사했어요 · 팀원에게 보내 주세요')}catch(_){toast('복사하지 못했어요 · 코드를 직접 알려 주세요')}},
   // 실험 하나 지우기: 두 번 눌러야 지워짐. 공유 중이어도 이 기기에서만 지워지고, 다시 받아 오지 않게 표시해 둠
   delExp(el){const t=team(),e=exp();if(!t||!e)return;
     if(!el.classList.contains('arm')){el.classList.add('arm');el.style.color='#C2504A';el.textContent='한 번 더 누르면 사진과 기록이 모두 지워져요';setTimeout(()=>{if(el.isConnected){el.classList.remove('arm');el.style.color='';el.textContent='이 실험 지우기'}},3500);return}
@@ -2359,6 +2392,7 @@ Object.assign(A,{
   render();
   if(await DB.open()){const st=await DB.get();if(st&&st.teams){S=st;if(S.me&&S.me.name)ME=S.me.name;if(S.loggedIn&&!(S.me&&S.me.name))S.loggedIn=false; // 예전 시안의 저장본에는 이름이 없으므로 이름부터 받음
     if(S.loggedIn){V={name:'teams'}}render()}}
+  if(S.loggedIn&&PENDING&&SYNC.on){const c=PENDING;PENDING='';joinByCode(c)} // 이미 쓰던 사람이 초대 링크를 연 경우
   // Claude에 로그인한 사람이면 그 이름을 씀 (못 가져오면 첫 화면에서 직접 적음)
   try{const u=window.claude&&window.claude.use?await window.claude.use('user'):null,m=u?await u.me():null;
     if(m&&m.name&&!(S.me&&S.me.src==='claude'&&S.me.name===m.name)){S.me={name:m.name,id:m.id||null,src:'claude'};ME=m.name;save();if(['login','teams','team','members'].includes(V.name))render()}}catch(_){}
